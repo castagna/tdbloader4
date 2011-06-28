@@ -3,3 +3,6 @@ TODO
 
  - Fix blank nodes scope, it must be per file not per split.
  - Backport to Hadoop v0.20.203.0?
+ - How to avoid copying the same jar each time we launch a MapReduce job?
+ - Use custom Writable objects instead of Text and binary files where possible.
+ - ...
