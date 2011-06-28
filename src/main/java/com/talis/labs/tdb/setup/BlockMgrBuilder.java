@@ -6,8 +6,8 @@
 
 package com.talis.labs.tdb.setup;
 
-import com.hp.hpl.jena.tdb.base.block.BlockMgr ;
-import com.hp.hpl.jena.tdb.base.file.FileSet ;
+import com.hp.hpl.jena.tdb.base.block.BlockMgr;
+import com.hp.hpl.jena.tdb.base.file.FileSet;
 
 public interface BlockMgrBuilder {
     BlockMgr buildBlockMgr(FileSet fileSet, String ext, int blockSize) ;

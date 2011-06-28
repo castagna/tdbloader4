@@ -25,6 +25,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.openjena.riot.out.NodeToLabel;
 import org.openjena.riot.out.OutputLangUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +119,7 @@ public class FirstMapper2 extends Mapper<LongWritable, QuadWritable, Text, Text>
     
     private String serialize(Node node) {
         StringWriter out = new StringWriter();
-        OutputLangUtils.output(out, node, null);
+        OutputLangUtils.output(out, node, null, NodeToLabel.createBNodeByLabelRaw());
         return out.toString();
     }
 }

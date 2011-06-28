@@ -6,9 +6,9 @@
 
 package com.talis.labs.tdb.setup;
 
-import com.hp.hpl.jena.tdb.base.file.FileSet ;
-import com.hp.hpl.jena.tdb.base.record.RecordFactory ;
-import com.hp.hpl.jena.tdb.index.Index ;
+import com.hp.hpl.jena.tdb.base.file.FileSet;
+import com.hp.hpl.jena.tdb.base.record.RecordFactory;
+import com.hp.hpl.jena.tdb.index.Index;
 
 public interface IndexBuilder {
     Index buildIndex(FileSet fileSet, RecordFactory recordfactory) ;

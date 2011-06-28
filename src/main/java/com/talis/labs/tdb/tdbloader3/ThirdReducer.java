@@ -52,7 +52,7 @@ public class ThirdReducer extends Reducer<Text, NullWritable, NullWritable, Null
 		try {
 			fs = FileSystem.get(context.getConfiguration());
 	        outRemote = FileOutputFormat.getWorkOutputPath(context);
-	        outLocal = new Path("/tmp", "third_" + context.getTaskAttemptID());
+            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
 	        new File(outLocal.toString()).mkdir();
 	        // TODO: does this make sense?
 	        fs.setReplication(outLocal, (short)2);

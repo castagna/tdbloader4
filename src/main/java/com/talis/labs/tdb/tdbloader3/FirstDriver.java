@@ -33,6 +33,7 @@ import com.talis.labs.tdb.tdbloader3.io.NQuadsInputFormat;
 public class FirstDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FirstDriver.class);
+    private static boolean useNQuadsInputFormat = true;
     
 	public FirstDriver () {
 		super();
@@ -57,10 +58,13 @@ public class FirstDriver extends Configured implements Tool {
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		
-		job.setInputFormatClass(NQuadsInputFormat.class);
-		job.setMapperClass(FirstMapper2.class);
-//		job.setMapperClass(FirstMapper.class);
+
+		if ( useNQuadsInputFormat ) {
+	        job.setInputFormatClass(NQuadsInputFormat.class);
+	        job.setMapperClass(FirstMapper2.class);		    
+		} else {
+	        job.setMapperClass(FirstMapper.class);		    
+		}
 		job.setReducerClass(FirstReducer.class);
 
 	    job.setOutputKeyClass(Text.class);

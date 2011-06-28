@@ -117,6 +117,7 @@
          <buildOutputDirectory>${project.build.directory}/classes-eclipse</buildOutputDirectory>
          <downloadSources>true</downloadSources>
          <downloadJavadocs>false</downloadJavadocs>
+         <useProjectReferences>false</useProjectReferences>
         </configuration>
       </plugin>
 

@@ -61,7 +61,16 @@ public class FirstReducer extends Reducer<Text, Text, LongWritable, Text> {
 	
     @Override
     public void setup(Context context) {
-        init(getLocation(context));
+        try {
+            fs = FileSystem.get(context.getConfiguration());
+            outRemote = FileOutputFormat.getWorkOutputPath(context);
+            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
+            fs.startLocalOutput(outRemote, outLocal);
+        } catch (Exception e) {
+            throw new TDBLoader3Exception(e);
+        }
+        Location location = new Location(outLocal.toString());
+        init(location);
     }
 
     private void init(Location location) {
@@ -101,18 +110,6 @@ public class FirstReducer extends Reducer<Text, Text, LongWritable, Text> {
         if ( objects != null ) objects.sync();
         if ( objects != null ) objects.close();
         if ( fs != null ) fs.completeLocalOutput(outRemote, outLocal);
-    }
-
-    private Location getLocation (Context context) {
-        try {
-            fs = FileSystem.get(context.getConfiguration());
-            outRemote = FileOutputFormat.getWorkOutputPath(context);
-            outLocal = new Path("/tmp", "first_" + context.getTaskAttemptID());
-            fs.startLocalOutput(outRemote, outLocal);
-            return new Location(outLocal.toString());
-        } catch (Exception e) {
-            throw new TDBLoader3Exception(e);
-        }
     }
     
 }

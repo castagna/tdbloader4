@@ -6,8 +6,8 @@
 
 package com.talis.labs.tdb.setup;
 
-import com.hp.hpl.jena.tdb.base.file.FileSet ;
-import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile ;
+import com.hp.hpl.jena.tdb.base.file.FileSet;
+import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
 
 public interface ObjectFileBuilder {
     ObjectFile buildObjectFile(FileSet fileSet, String ext) ;

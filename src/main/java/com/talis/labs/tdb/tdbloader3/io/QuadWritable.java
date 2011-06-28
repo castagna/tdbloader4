@@ -88,4 +88,8 @@ public class QuadWritable extends BinaryComparable implements WritableComparable
         }
     }
 
+    @Override
+    public String toString() {
+        return quad.toString();
+    }
 }

@@ -19,16 +19,16 @@ package com.talis.labs.tdb.tdbloader3;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hadoop.fs.Path;
 import org.openjena.riot.lang.LabelToNode;
-import org.openjena.riot.system.MapWithScope;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.AnonId;
 
-public class MapReduceLabelToNode extends MapWithScope<String, Node, Node> { 
+public class MapReduceLabelToNode extends LabelToNode { 
 
-    public MapReduceLabelToNode(String filename) {
-        super(new SingleScopePolicy(), new MapReduceAllocator(filename));
+    public MapReduceLabelToNode(Path path) {
+        super(new SingleScopePolicy(), new MapReduceAllocator(path));
     }
     
     private static class SingleScopePolicy implements ScopePolicy<String, Node, Node> { 
@@ -38,15 +38,15 @@ public class MapReduceLabelToNode extends MapWithScope<String, Node, Node> {
     }
     
     private static class MapReduceAllocator implements Allocator<String, Node> {
-        private String filename ;
+        private Path path ;
 
-        public MapReduceAllocator (String filename) {
-            this.filename = filename;
+        public MapReduceAllocator (Path path) {
+            this.path = path;
         }
 
         @Override 
         public Node create(String label) {
-            return Node.createAnon(new AnonId(filename + "_" + label)) ;
+            return Node.createAnon(new AnonId("mrbnode_" + path.hashCode() + "_" + label)) ;
         }
 
         @Override public void reset() {}

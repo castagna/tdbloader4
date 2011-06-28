@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -29,11 +30,10 @@ import org.openjena.atlas.lib.Sink;
 import org.openjena.riot.ErrorHandlerFactory;
 import org.openjena.riot.lang.LabelToNode;
 import org.openjena.riot.lang.LangNQuads;
+import org.openjena.riot.out.NodeToLabel;
 import org.openjena.riot.out.OutputLangUtils;
 import org.openjena.riot.system.IRIResolver;
-import org.openjena.riot.system.MapWithScope;
 import org.openjena.riot.system.Prologue;
-import org.openjena.riot.system.SyntaxLabels;
 import org.openjena.riot.tokens.Tokenizer;
 import org.openjena.riot.tokens.TokenizerFactory;
 import org.slf4j.Logger;
@@ -50,10 +50,11 @@ public class FirstMapper extends Mapper<LongWritable, Text, Text, Text> {
     private LabelToNode labelMapping;
 
     public void setup(Context context) throws IOException, InterruptedException {
+        // TODO: why this is null when it runs locally?
         inputFileName = context.getConfiguration().get("mapreduce.map.input.file");
         Prologue prologue = new Prologue(null, IRIResolver.createNoResolve()); 
-        // labelMapping = new MapReduceLabelToNode(inputFileName);
-        labelMapping = SyntaxLabels.createLabelToNode();
+        labelMapping = new MapReduceLabelToNode(new Path(inputFileName));
+        // labelMapping = SyntaxLabels.createLabelToNode();
         profile = new MapReduceParserProfile(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
     }
     
@@ -159,7 +160,7 @@ class SinkToContext implements Sink<Quad> {
     
     private String serialize(Node node) {
         StringWriter out = new StringWriter();
-        OutputLangUtils.output(out, node, null);
+        OutputLangUtils.output(out, node, null, NodeToLabel.createBNodeByLabelRaw());
         return out.toString();
     }
     

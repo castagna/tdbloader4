@@ -40,11 +40,17 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.util.LineReader;
-import org.openjena.riot.Lang;
+import org.openjena.riot.ErrorHandlerFactory;
+import org.openjena.riot.lang.LabelToNode;
 import org.openjena.riot.lang.LangNQuads;
-import org.openjena.riot.system.RiotLib;
+import org.openjena.riot.system.IRIResolver;
+import org.openjena.riot.system.ParserProfile;
+import org.openjena.riot.system.Prologue;
 import org.openjena.riot.tokens.Tokenizer;
 import org.openjena.riot.tokens.TokenizerFactory;
+
+import com.talis.labs.tdb.tdbloader3.MapReduceLabelToNode;
+import com.talis.labs.tdb.tdbloader3.MapReduceParserProfile;
 
 public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
 
@@ -62,6 +68,7 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
     private LineReader in;
     private FSDataInputStream fileIn;
     private Seekable filePosition;
+    private Path path;
     
     private int maxLineLength;
     private Counter inputByteCounter;
@@ -73,6 +80,7 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
     @Override
     public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException, InterruptedException {
         FileSplit split = (FileSplit) genericSplit;
+        path = split.getPath();        
         inputByteCounter = context.getCounter(FileInputFormat.COUNTER_GROUP, FileInputFormat.BYTES_READ);
         Configuration job = context.getConfiguration();
         this.maxLineLength = job.getInt(MAX_LINE_LENGTH, Integer.MAX_VALUE);
@@ -126,8 +134,11 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
         // We always read one extra line, which lies outside the upper split limit i.e. (end - 1)
         while (getFilePosition() <= end) {
             newSize = in.readLine(value, maxLineLength, Math.max(maxBytesToConsume(pos), maxLineLength));
+            Prologue prologue = new Prologue(null, IRIResolver.createNoResolve()); 
+            LabelToNode labelMapping = new MapReduceLabelToNode(path);
+            ParserProfile profile = new MapReduceParserProfile(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
             Tokenizer tokenizer = TokenizerFactory.makeTokenizerASCII(value.toString()) ;
-            LangNQuads parser = new LangNQuads(tokenizer, RiotLib.profile(Lang.NQUADS, null), null) ;
+            LangNQuads parser = new LangNQuads(tokenizer, profile, null) ;
             if ( parser.hasNext() ) {
                 quad = new QuadWritable(parser.next());
             }
