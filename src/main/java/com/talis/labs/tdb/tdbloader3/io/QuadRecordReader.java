@@ -68,7 +68,10 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
     private LineReader in;
     private FSDataInputStream fileIn;
     private Seekable filePosition;
-    private Path path;
+
+    private Prologue prologue; 
+    private LabelToNode labelMapping;
+    private ParserProfile profile;
     
     private int maxLineLength;
     private Counter inputByteCounter;
@@ -80,7 +83,12 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
     @Override
     public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException, InterruptedException {
         FileSplit split = (FileSplit) genericSplit;
-        path = split.getPath();        
+        
+        // RIOT configuration 
+        prologue = new Prologue(null, IRIResolver.createNoResolve()); 
+        labelMapping = new MapReduceLabelToNode(context.getJobID(), split.getPath());
+        profile = new MapReduceParserProfile(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
+        
         inputByteCounter = context.getCounter(FileInputFormat.COUNTER_GROUP, FileInputFormat.BYTES_READ);
         Configuration job = context.getConfiguration();
         this.maxLineLength = job.getInt(MAX_LINE_LENGTH, Integer.MAX_VALUE);
@@ -134,9 +142,6 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
         // We always read one extra line, which lies outside the upper split limit i.e. (end - 1)
         while (getFilePosition() <= end) {
             newSize = in.readLine(value, maxLineLength, Math.max(maxBytesToConsume(pos), maxLineLength));
-            Prologue prologue = new Prologue(null, IRIResolver.createNoResolve()); 
-            LabelToNode labelMapping = new MapReduceLabelToNode(path);
-            ParserProfile profile = new MapReduceParserProfile(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
             Tokenizer tokenizer = TokenizerFactory.makeTokenizerASCII(value.toString()) ;
             LangNQuads parser = new LangNQuads(tokenizer, profile, null) ;
             if ( parser.hasNext() ) {

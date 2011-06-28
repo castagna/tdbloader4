@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.JobID;
 import org.openjena.riot.lang.LabelToNode;
 
 import com.hp.hpl.jena.graph.Node;
@@ -27,8 +28,8 @@ import com.hp.hpl.jena.rdf.model.AnonId;
 
 public class MapReduceLabelToNode extends LabelToNode { 
 
-    public MapReduceLabelToNode(Path path) {
-        super(new SingleScopePolicy(), new MapReduceAllocator(path));
+    public MapReduceLabelToNode(JobID jobId, Path path) {
+        super(new SingleScopePolicy(), new MapReduceAllocator(jobId, path));
     }
     
     private static class SingleScopePolicy implements ScopePolicy<String, Node, Node> { 
@@ -38,15 +39,18 @@ public class MapReduceLabelToNode extends LabelToNode {
     }
     
     private static class MapReduceAllocator implements Allocator<String, Node> {
+        
+        private JobID jobId ;
         private Path path ;
 
-        public MapReduceAllocator (Path path) {
+        public MapReduceAllocator (JobID jobId, Path path) {
+            this.jobId = jobId;
             this.path = path;
         }
 
         @Override 
         public Node create(String label) {
-            return Node.createAnon(new AnonId("mrbnode_" + path.hashCode() + "_" + label)) ;
+            return Node.createAnon(new AnonId("mrbnode_" + jobId.hashCode() + "_" + path.hashCode() + "_" + label)) ;
         }
 
         @Override public void reset() {}

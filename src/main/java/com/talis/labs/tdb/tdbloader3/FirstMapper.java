@@ -22,10 +22,10 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.openjena.atlas.lib.Sink;
 import org.openjena.riot.ErrorHandlerFactory;
 import org.openjena.riot.lang.LabelToNode;
@@ -45,15 +45,12 @@ import com.hp.hpl.jena.sparql.core.Quad;
 public class FirstMapper extends Mapper<LongWritable, Text, Text, Text> {
 
     private static final Logger log = LoggerFactory.getLogger(FirstMapper.class);
-    private String inputFileName;
     private MapReduceParserProfile profile;
     private LabelToNode labelMapping;
 
     public void setup(Context context) throws IOException, InterruptedException {
-        // TODO: why this is null when it runs locally?
-        inputFileName = context.getConfiguration().get("mapreduce.map.input.file");
         Prologue prologue = new Prologue(null, IRIResolver.createNoResolve()); 
-        labelMapping = new MapReduceLabelToNode(new Path(inputFileName));
+        labelMapping = new MapReduceLabelToNode(context.getJobID(), ((FileSplit) context.getInputSplit()).getPath());
         // labelMapping = SyntaxLabels.createLabelToNode();
         profile = new MapReduceParserProfile(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
     }

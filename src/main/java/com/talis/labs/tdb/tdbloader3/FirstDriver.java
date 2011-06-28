@@ -33,7 +33,7 @@ import com.talis.labs.tdb.tdbloader3.io.NQuadsInputFormat;
 public class FirstDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FirstDriver.class);
-    private static boolean useNQuadsInputFormat = true;
+    private static boolean useNQuadsInputFormat = false;
     
 	public FirstDriver () {
 		super();
