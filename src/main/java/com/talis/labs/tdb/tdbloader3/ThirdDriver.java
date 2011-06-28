@@ -73,6 +73,8 @@ public class ThirdDriver extends Configured implements Tool {
 		job.setReducerClass(ThirdReducer.class);
 
 		// TODO: There must be a bug in the SNAPSHOTs of Hadoop
+		// see: http://markmail.org/thread/n3wqbozf6ow2cib6
+		//
 		// WARN  Exception running child : java.lang.NullPointerException
 		//    at org.apache.hadoop.mapred.TaskLogAppender.flush(TaskLogAppender.java:96)
 		//    at org.apache.hadoop.mapred.TaskLog.syncLogs(TaskLog.java:239)
