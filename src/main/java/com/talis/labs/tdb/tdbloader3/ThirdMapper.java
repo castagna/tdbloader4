@@ -18,57 +18,47 @@ package com.talis.labs.tdb.tdbloader3;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.openjena.atlas.lib.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ThirdMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
+import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
+
+public class ThirdMapper extends Mapper<NullWritable, LongQuadWritable, LongQuadWritable, NullWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdMapper.class);
 
-    private Text outputKey = new Text();
+    private LongQuadWritable outputKey = new LongQuadWritable();
     private NullWritable outputValue = NullWritable.get();
     
     @Override
-	public void map (LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+	public void map (NullWritable key, LongQuadWritable value, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
 
-		String v[] = value.toString().split(" ");
+		long s = value.get(0);
+        long p = value.get(1);
+        long o = value.get(2);
+        long g = value.get(3);
 
-		Text s = toHex(v[0]);
-        Text p = toHex(v[1]);
-        Text o = toHex(v[2]);
-
-		if ( v.length == 4 ) {
-	        Text g = toHex(v[3]);
-	        emit (context, String.format("%s %s %s %s|%s", s, p, o, g, "SPOG"));
-			emit (context, String.format("%s %s %s %s|%s", p, o, s, g, "POSG"));
-			emit (context, String.format("%s %s %s %s|%s", o, s, p, g, "OSPG"));
-			emit (context, String.format("%s %s %s %s|%s", g, s, p, o, "GSPO"));
-			emit (context, String.format("%s %s %s %s|%s", g, p, o, s, "GPOS"));
-			emit (context, String.format("%s %s %s %s|%s", g, o, s, p, "GOSP"));
-		} else if ( v.length == 3 ) {
-			emit (context, String.format("%s %s %s|%s", s, p, o, "SPO"));
-			emit (context, String.format("%s %s %s|%s", p, o, s, "POS"));
-			emit (context, String.format("%s %s %s|%s", o, s, p, "OSP"));
+		if ( g != -1l ) {
+	        emit (context, s, p, o, g, "SPOG");
+			emit (context, p, o, s, g, "POSG");
+			emit (context, o, s, p, g, "OSPG");
+			emit (context, g, s, p, o, "GSPO");
+			emit (context, g, p, o, s, "GPOS");
+			emit (context, g, o, s, p, "GOSP");
+		} else {
+			emit (context, s, p, o, -1l, "SPO");
+			emit (context, p, o, s, -1l, "POS");
+			emit (context, o, s, p, -1l, "OSP");
 		}
 		
 	}
-
-	private Text toHex(String str) {
-	    long id = Long.parseLong(str);
-        byte[] b = new byte[16];
-        Hex.formatUnsignedLongHex(b, 0, id, 16);
-        return new Text(b);
-	}
 	
-	private void emit (Context context, String key) throws IOException, InterruptedException {
+	private void emit (Context context, long s, long p, long o, long g, String indexName) throws IOException, InterruptedException {
 	    outputKey.clear();
-	    outputKey.set(key);
+	    outputKey.set(s, p, o, g, indexName);
 	    context.write(outputKey, outputValue);
         if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);	    
 	}

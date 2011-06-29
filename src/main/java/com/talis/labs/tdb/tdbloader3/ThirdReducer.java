@@ -31,13 +31,15 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.openjena.atlas.lib.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.bulkloader2.CmdIndexBuild;
+import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
 
-public class ThirdReducer extends Reducer<Text, NullWritable, NullWritable, NullWritable> {
+public class ThirdReducer extends Reducer<LongQuadWritable, NullWritable, NullWritable, NullWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdReducer.class);
 
@@ -63,18 +65,31 @@ public class ThirdReducer extends Reducer<Text, NullWritable, NullWritable, Null
 	}
 
 	@Override
-	public void reduce(Text key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
+	public void reduce(LongQuadWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, NullWritable.get());
 
-		String[] k = key.toString().split("\\|");
-		String filename = k[1];
+		String filename = key.getIndexName();
 		
 		OutputStream out = getOutputStream(filename);
 		if ( out != null ) {
-			out.write(k[0].getBytes());
+			out.write(toHex(key.get(0)));
+			out.write(' ');
+			out.write(toHex(key.get(1)));
+			out.write(' ');
+			out.write(toHex(key.get(2)));
+			if ( key.get(3) != -1l ) {
+				out.write(' ');
+				out.write(toHex(key.get(3)));				
+			}
 			out.write('\n');
 		}
-        if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, k[0]);
+        if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
+	}
+	
+	private byte[] toHex(long id) {
+        byte[] b = new byte[16];
+        Hex.formatUnsignedLongHex(b, 0, id, 16);
+        return b;
 	}
 	
 	private OutputStream getOutputStream(String filename) throws FileNotFoundException {

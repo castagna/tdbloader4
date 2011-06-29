@@ -5,6 +5,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.io.BinaryComparable;
 import org.apache.hadoop.io.WritableComparable;
@@ -15,10 +17,32 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 	private static final long serialVersionUID = -7228403148893164927L;
 	static final int LONG_BYTE_LENGTH = 8;
 	static final int LONG_QUAD_BYTE_LENGTH = 4 * LONG_BYTE_LENGTH;
-	private byte[] b = new byte [LONG_QUAD_BYTE_LENGTH];
+	private byte[] b = new byte [LONG_QUAD_BYTE_LENGTH + 1];
+	private static final Map<String, Byte> indexNameToByte = new HashMap<String,Byte>(); 
+	private static final Map<Byte, String> indexByteToName = new HashMap<Byte,String>(); 
 
 	static {
 		WritableComparator.define(LongQuadWritable.class, new LongQuadComparator());
+		
+		indexNameToByte.put("SPO", (byte)0);
+		indexNameToByte.put("POS", (byte)1);
+		indexNameToByte.put("OSP", (byte)2);
+		indexNameToByte.put("SPOG", (byte)3);
+		indexNameToByte.put("POSG", (byte)4);
+		indexNameToByte.put("OSPG", (byte)5);
+		indexNameToByte.put("GSPO", (byte)6);
+		indexNameToByte.put("GPOS", (byte)7);
+		indexNameToByte.put("GOSP", (byte)8);
+		
+		indexByteToName.put((byte)0, "SPO");
+		indexByteToName.put((byte)1, "POS");
+		indexByteToName.put((byte)2, "OSP");
+		indexByteToName.put((byte)3, "SPOG");
+		indexByteToName.put((byte)4, "POSG");
+		indexByteToName.put((byte)5, "OSPG");
+		indexByteToName.put((byte)6, "GSPO");
+		indexByteToName.put((byte)7, "GPOS");
+		indexByteToName.put((byte)8, "GOSP");
 	}
 	
 	public LongQuadWritable() {
@@ -26,6 +50,7 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 		set(1, 0l);
 		set(2, 0l);
 		set(3, 0l);
+		b[LONG_QUAD_BYTE_LENGTH] = -1;
 	}
 	
 	public LongQuadWritable(long l1, long l2, long l3, long l4) {
@@ -33,6 +58,15 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 		set(1, l2);
 		set(2, l3);
 		set(3, l4);
+		b[LONG_QUAD_BYTE_LENGTH] = -1;
+	}
+	
+	public LongQuadWritable(long l1, long l2, long l3, long l4, String indexName) {
+		set(0, l1);
+		set(1, l2);
+		set(2, l3);
+		set(3, l4);
+		setIndexName(indexName);
 	}
 	
 	public LongQuadWritable(LongQuadWritable that) {
@@ -40,6 +74,7 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 		set(1, that.get(1));
 		set(2, that.get(2));
 		set(3, that.get(3));
+		setIndexName(that.getIndexName());
 	}
 	
 	public void set(int i, long value) {
@@ -102,7 +137,7 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 
 	@Override
 	public String toString() {
-		return "(" + get(0) + ", " + get(1) + ", " + get(2) + ", " + get(3) + ')';
+		return "{" + get(0) + ", " + get(1) + ", " + get(2) + ", " + get(3) + ", " + getIndexName() + '}';
 	}
 	
 	public static final class LongQuadComparator extends WritableComparator implements Serializable {
@@ -118,13 +153,13 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 		}
 
 		static int doCompare(byte[] b1, int s1, byte[] b2, int s2) {
-			for ( int i = 0; i < 3; i++ ) {
+			for ( int i = 0; i < 4; i++ ) {
 				int compare = compareLongs(b1, s1 + LONG_BYTE_LENGTH * i, b2, s2 + LONG_BYTE_LENGTH * i);
 				if (compare != 0) {
 					return compare;
 				}				
 			}
-			return compareLongs(b1, s1 + LONG_BYTE_LENGTH * 3, b2, s2 + LONG_BYTE_LENGTH * 3);
+			return b1[LONG_QUAD_BYTE_LENGTH] - b2[LONG_QUAD_BYTE_LENGTH];
 		}
 
 		private static int compareLongs(byte[] b1, int s1, byte[] b2, int s2) {
@@ -142,6 +177,43 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 			}
 			return 0;
 		}
+	}
+
+	public void clear() {
+		set ( -1l, -1l, -1l, -1l );
+		b[LONG_QUAD_BYTE_LENGTH] = -1;
+	}
+
+	public void set(long l1, long l2, long l3, long l4) {
+		set (0, l1);
+		set (1, l2);
+		set (2, l3);
+		set (3, l4);
+	}
+	
+	public void set(long l1, long l2, long l3) {
+		set (0, l1);
+		set (1, l2);
+		set (2, l3);
+		set (3, -1l);
+	}
+
+	public void setIndexName(String indexName) {
+		Byte v = indexNameToByte.get(indexName);
+		if ( v != null ) {
+			b[LONG_QUAD_BYTE_LENGTH] = v;
+		} else {
+			b[LONG_QUAD_BYTE_LENGTH] = -1;
+		}
+	}
+
+	public String getIndexName() {
+		return indexByteToName.get(b[LONG_QUAD_BYTE_LENGTH]);
+	}
+
+	public void set(long s, long p, long o, long g, String indexName) {
+		set(s,p,o,g);
+		setIndexName(indexName);
 	}
 
 }

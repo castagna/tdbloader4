@@ -20,14 +20,16 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
 
 public class ThirdDriver extends Configured implements Tool {
 
@@ -72,6 +74,8 @@ public class ThirdDriver extends Configured implements Tool {
 		job.setMapperClass(ThirdMapper.class);
 		job.setReducerClass(ThirdReducer.class);
 
+		job.setInputFormatClass(SequenceFileInputFormat.class);
+		
 		// TODO: There must be a bug in the SNAPSHOTs of Hadoop
 		// see: http://markmail.org/thread/n3wqbozf6ow2cib6
 		//
@@ -89,7 +93,7 @@ public class ThirdDriver extends Configured implements Tool {
 		// 
 		job.setNumReduceTasks(1);
 
-		job.setOutputKeyClass(Text.class);
+		job.setOutputKeyClass(LongQuadWritable.class);
 		job.setOutputValueClass(NullWritable.class);
 		
 		return job.waitForCompletion(true) ? 0 : 1;

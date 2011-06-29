@@ -24,35 +24,37 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SecondReducer extends Reducer<Text, Text, NullWritable, Text> {
+import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
+
+public class SecondReducer extends Reducer<Text, Text, NullWritable, LongQuadWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(SecondReducer.class);
 
     private NullWritable outputKey = NullWritable.get();
-    private Text outputValue = new Text();
+    private LongQuadWritable outputValue = new LongQuadWritable();
 
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		
-		String s = null;
-		String p = null;
-		String o = null;
-		String g = null;
+		long s = -1l;
+		long p = -1l;
+		long o = -1l;
+		long g = -1l;
 		
 		for (Text value : values) {
 	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
 			String[] v = value.toString().split("\\|");
 			
-			if ( v[1].equals("S") ) s = v[0];
-			if ( v[1].equals("P") ) p = v[0];
-			if ( v[1].equals("O") ) o = v[0];
-			if ( v[1].equals("G") ) g = v[0];
+			if ( v[1].equals("S") ) s = Long.parseLong(v[0]);
+			if ( v[1].equals("P") ) p = Long.parseLong(v[0]);
+			if ( v[1].equals("O") ) o = Long.parseLong(v[0]);
+			if ( v[1].equals("G") ) g = Long.parseLong(v[0]);
 		}		
 
-		if ( g != null ) {
-		    outputValue.set(s + " " + p + " " + o + " " + g);
-		} else if ( ( s != null ) && ( p != null ) && ( o != null ) ) {
-            outputValue.set(s + " " + p + " " + o);
+		if ( g != -1l ) {
+		    outputValue.set(s, p, o, g);
+		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
+		    outputValue.set(s, p, o);
 		}
         context.write(outputKey, outputValue);
         if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);

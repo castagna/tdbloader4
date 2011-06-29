@@ -31,6 +31,26 @@ public class TestLongQuadWritable {
 		assertEquals(0, lqw1.compareTo(lqw2));
 	}
 
+	@Test public void test3a() {
+		LongQuadWritable lqw1 = new LongQuadWritable(0,1,2,3);
+		LongQuadWritable lqw2 = new LongQuadWritable(0,1,2,3, null);
+		assertEquals(lqw1, lqw2);
+	}
+
+	@Test public void test3b() {
+		LongQuadWritable lqw1 = new LongQuadWritable(0,1,2,3);
+		LongQuadWritable lqw2 = new LongQuadWritable(0,1,2,3, "NON EXISTING");
+		assertEquals(lqw1, lqw2);
+	}
+
+	@Test public void test3c() {
+		LongQuadWritable lqw1 = new LongQuadWritable(0,1,2,3);
+		LongQuadWritable lqw2 = new LongQuadWritable(0,1,2,3, "SPO");
+		assertFalse(lqw1.equals(lqw2));
+		assertEquals(-1, lqw1.compareTo(lqw2));
+		assertEquals(1, lqw2.compareTo(lqw1));
+	}
+
 	@Test public void test4() {
 		LongQuadWritable lqw1 = new LongQuadWritable(0,1,2,3);
 		LongQuadWritable lqw2 = new LongQuadWritable(-0l,1,2,3);
