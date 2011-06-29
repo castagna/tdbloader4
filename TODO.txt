@@ -7,5 +7,6 @@ TODO
    see: http://markmail.org/thread/sxnq4ini5fb3tivm
 
  - Use custom Writable objects instead of Text and binary files where possible.
+   see: http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/common/IntPairWritable.java
 
  - ...
