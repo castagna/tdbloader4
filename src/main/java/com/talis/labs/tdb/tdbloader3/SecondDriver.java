@@ -56,7 +56,8 @@ public class SecondDriver extends Configured implements Tool {
 			return -1;
 		}
 		
-		Job job = Job.getInstance(getConf(), "second");
+		Job job = new Job(getConf());
+		job.setJobName("second");
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));

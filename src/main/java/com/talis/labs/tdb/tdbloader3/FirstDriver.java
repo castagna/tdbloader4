@@ -63,7 +63,8 @@ public class FirstDriver extends Configured implements Tool {
 			return -1;
 		}
 		
-		Job job = Job.getInstance(getConf(), "first");
+		Job job = new Job(getConf());
+		job.setJobName("first");
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));

@@ -53,7 +53,8 @@ public class ThirdDriver extends Configured implements Tool {
 			return -1;
 		}
 		
-		Job job = Job.getInstance(getConf(), "third");
+		Job job = new Job(getConf());
+		job.setJobName("third");
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));

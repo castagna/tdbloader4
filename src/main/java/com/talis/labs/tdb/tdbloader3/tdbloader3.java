@@ -27,10 +27,9 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -108,11 +107,13 @@ public class tdbloader3 extends Configured implements Tool {
 	}
 	
 	private void copyToLocalFile ( FileSystem fs, Path src, Path dst ) throws FileNotFoundException, IOException {
-        RemoteIterator<LocatedFileStatus> iter = fs.listFiles(src, true);
-        while ( iter.hasNext() ) {
-            LocatedFileStatus lfs = iter.next();
-            Path path = lfs.getPath();
+		FileStatus[] status = fs.listStatus(src);
+		for ( FileStatus fileStatus : status ) {
+            Path path = fileStatus.getPath();
             String pathName = path.getName();
+            if ( pathName.startsWith("first_") || pathName.startsWith("third_") ) {
+            	copyToLocalFile(fs, path, dst);
+            }
             if ( pathName.endsWith(".idn") || pathName.endsWith(".dat") ) {
                 fs.copyToLocalFile(path, new Path(dst, path.getName()));
             }

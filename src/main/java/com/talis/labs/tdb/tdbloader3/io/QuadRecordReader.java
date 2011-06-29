@@ -31,10 +31,9 @@ import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.Decompressor;
-import org.apache.hadoop.io.compress.SplitCompressionInputStream;
-import org.apache.hadoop.io.compress.SplittableCompressionCodec;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -73,14 +72,15 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
     private CompressionCodec codec;
     private Decompressor decompressor;
     
-    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
     public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException, InterruptedException {
         FileSplit split = (FileSplit) genericSplit;
         
         // RIOT configuration 
         profile = Utils.createParserProfile(context.getJobID(), split.getPath());
         
-        inputByteCounter = context.getCounter(FileInputFormat.COUNTER_GROUP, FileInputFormat.BYTES_READ);
+        inputByteCounter = ((MapContext)context).getCounter(FileInputFormat.Counter.BYTES_READ);
         Configuration job = context.getConfiguration();
         this.maxLineLength = job.getInt(MAX_LINE_LENGTH, Integer.MAX_VALUE);
         start = split.getStart();
@@ -94,17 +94,8 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
         fileIn = fs.open(file);
         if (isCompressedInput()) {
             decompressor = CodecPool.getDecompressor(codec);
-            if (codec instanceof SplittableCompressionCodec) {
-                final SplitCompressionInputStream cIn = ((SplittableCompressionCodec) codec)
-                    .createInputStream(fileIn, decompressor, start, end, SplittableCompressionCodec.READ_MODE.BYBLOCK);
-                in = new LineReader(cIn, job);
-                start = cIn.getAdjustedStart();
-                end = cIn.getAdjustedEnd();
-                filePosition = cIn;
-            } else {
-                in = new LineReader(codec.createInputStream(fileIn, decompressor), job);
-                filePosition = fileIn;
-            }
+            in = new LineReader(codec.createInputStream(fileIn, decompressor), job);
+            filePosition = fileIn;
         } else {
             fileIn.seek(start);
             in = new LineReader(fileIn, job);
