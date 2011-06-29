@@ -17,24 +17,25 @@
 package com.talis.labs.tdb.tdbloader3;
 
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Partitioner;
 
-public class ThirdCustomPartitioner extends Partitioner<Text, NullWritable>{
+import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
+
+public class ThirdCustomPartitioner extends Partitioner<LongQuadWritable, NullWritable>{
 
 	@Override
-	public int getPartition(Text key, NullWritable value, int numPartitions) {
-		String v = key.toString().split("\\|")[1];
+	public int getPartition(LongQuadWritable key, NullWritable value, int numPartitions) {
+		String indexName = key.getIndexName();
 
-		if ( v.equals("SPO") ) return 0;
-		if ( v.equals("POS") ) return 1;
-		if ( v.equals("OSP") ) return 2;
-		if ( v.equals("GSPO") ) return 3;
-		if ( v.equals("GPOS") ) return 4;
-		if ( v.equals("GOSP") ) return 5;
-		if ( v.equals("SPOG") ) return 6;
-		if ( v.equals("POSG") ) return 7;
-		if ( v.equals("OSPG") ) return 8;
+		if ( indexName.equals("SPO") ) return 0;
+		if ( indexName.equals("POS") ) return 1;
+		if ( indexName.equals("OSP") ) return 2;
+		if ( indexName.equals("GSPO") ) return 3;
+		if ( indexName.equals("GPOS") ) return 4;
+		if ( indexName.equals("GOSP") ) return 5;
+		if ( indexName.equals("SPOG") ) return 6;
+		if ( indexName.equals("POSG") ) return 7;
+		if ( indexName.equals("OSPG") ) return 8;
 		
 		return 0;
 	}

@@ -30,7 +30,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.openjena.atlas.lib.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,32 +64,25 @@ public class ThirdReducer extends Reducer<LongQuadWritable, NullWritable, NullWr
 
 	@Override
 	public void reduce(LongQuadWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
-        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, NullWritable.get());
+        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, values.iterator().next());
 
 		String filename = key.getIndexName();
-		
 		OutputStream out = getOutputStream(filename);
 		if ( out != null ) {
-			out.write(toHex(key.get(0)));
+			out.write(Utils.toHex(key.get(0)));
 			out.write(' ');
-			out.write(toHex(key.get(1)));
+			out.write(Utils.toHex(key.get(1)));
 			out.write(' ');
-			out.write(toHex(key.get(2)));
+			out.write(Utils.toHex(key.get(2)));
 			if ( key.get(3) != -1l ) {
 				out.write(' ');
-				out.write(toHex(key.get(3)));				
+				out.write(Utils.toHex(key.get(3)));				
 			}
 			out.write('\n');
 		}
 		context.progress();
 		
         if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
-	}
-	
-	private byte[] toHex(long id) {
-        byte[] b = new byte[16];
-        Hex.formatUnsignedLongHex(b, 0, id, 16);
-        return b;
 	}
 	
 	private OutputStream getOutputStream(String filename) throws FileNotFoundException {
@@ -106,7 +98,8 @@ public class ThirdReducer extends Reducer<LongQuadWritable, NullWritable, NullWr
 	public void cleanup(Context context) throws IOException {
 		for ( String filename : outputs.keySet() ) {
 			outputs.get(filename).close();
-		}	
+		}
+
 		Location location = new Location(outLocal.toString());
 		for ( String indexName : Utils.indexNames ) {
 		    String indexFilename = location.absolute(indexName);

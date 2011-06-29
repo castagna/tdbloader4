@@ -4,6 +4,7 @@ import java.io.StringWriter;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.JobID;
+import org.openjena.atlas.lib.Hex;
 import org.openjena.riot.ErrorHandlerFactory;
 import org.openjena.riot.lang.LabelToNode;
 import org.openjena.riot.out.NodeToLabel;
@@ -51,4 +52,9 @@ public class Utils {
 	    "POSG",
 	    "OSPG"
 	};
+	public static byte[] toHex(long id) {
+	    byte[] b = new byte[16];
+	    Hex.formatUnsignedLongHex(b, 0, id, 16);
+	    return b;
+	}
 }
