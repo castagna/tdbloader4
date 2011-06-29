@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.talis.labs.tdb.tdbloader3;
+package com.talis.labs.tdb.tdbloader3.io;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -22,25 +22,41 @@ public class TestTDBLoader3 {
     @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { "src/test/resources/test-01", "target/output" }, 
-                { "src/test/resources/test-02", "target/output" }, 
-                { "src/test/resources/test-03", "target/output" },
-                { "src/test/resources/test-04", "target/output" },
+                { "src/test/resources/test-01", "target/output", true }, 
+                { "src/test/resources/test-02", "target/output", true }, 
+                { "src/test/resources/test-03", "target/output", true },
+                { "src/test/resources/test-04", "target/output", true },
+
+                { "src/test/resources/test-01", "target/output", false }, 
+                { "src/test/resources/test-02", "target/output", false }, 
+                { "src/test/resources/test-03", "target/output", false },
+                { "src/test/resources/test-04", "target/output", false },
+
         });
     }
 
     private String input ;
     private String output ;
+    private boolean nquadInputFormat ;
     
-    public TestTDBLoader3 ( String input, String output ) {
+    public TestTDBLoader3 ( String input, String output, boolean nquadInputFormat ) {
         this.input = input ;
         this.output = output ;
+        this.nquadInputFormat = nquadInputFormat ;
     }
     
-    @Test public void test() throws Exception { run (input, output); }
+    @Test public void test() throws Exception { 
+    	run (input, output, nquadInputFormat); 
+    }
     
-    private void run ( String input, String output ) throws Exception {
-        String[] args = new String[] {"-conf", "conf/hadoop-local.xml", "-D", "overrideOutput=true", "-D", "copyToLocal=true", "-D", "verify=false", input, output};
+    private void run ( String input, String output, boolean nquadInputFormat ) throws Exception {
+        String[] args = new String[] {
+        		"-conf", "conf/hadoop-local.xml", 
+        		"-D", "overrideOutput=true", 
+        		"-D", "copyToLocal=true", 
+        		"-D", "verify=false", 
+        		"-D", "nquadInputFormat=" + nquadInputFormat, 
+        		input, output};
         assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
         DatasetGraphTDB dsgMem = tdbloader3.load(input);
         DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;

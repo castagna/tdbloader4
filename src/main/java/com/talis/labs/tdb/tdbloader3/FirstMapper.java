@@ -17,7 +17,6 @@
 package com.talis.labs.tdb.tdbloader3;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 
@@ -27,32 +26,22 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.openjena.atlas.lib.Sink;
-import org.openjena.riot.ErrorHandlerFactory;
-import org.openjena.riot.lang.LabelToNode;
 import org.openjena.riot.lang.LangNQuads;
-import org.openjena.riot.out.NodeToLabel;
-import org.openjena.riot.out.OutputLangUtils;
-import org.openjena.riot.system.IRIResolver;
-import org.openjena.riot.system.Prologue;
+import org.openjena.riot.system.ParserProfile;
 import org.openjena.riot.tokens.Tokenizer;
 import org.openjena.riot.tokens.TokenizerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.Quad;
 
 public class FirstMapper extends Mapper<LongWritable, Text, Text, Text> {
 
     private static final Logger log = LoggerFactory.getLogger(FirstMapper.class);
-    private MapReduceParserProfile profile;
-    private LabelToNode labelMapping;
+    private ParserProfile profile;
 
     public void setup(Context context) throws IOException, InterruptedException {
-        Prologue prologue = new Prologue(null, IRIResolver.createNoResolve()); 
-        labelMapping = new MapReduceLabelToNode(context.getJobID(), ((FileSplit) context.getInputSplit()).getPath());
-        // labelMapping = SyntaxLabels.createLabelToNode();
-        profile = new MapReduceParserProfile(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
+        profile = Utils.createParserProfile(context.getJobID(), ((FileSplit) context.getInputSplit()).getPath());
     }
     
     @Override
@@ -98,12 +87,12 @@ class SinkToContext implements Sink<Quad> {
 
     @Override
     public void send(Quad quad) {
-        String s = serialize(quad.getSubject());
-        String p = serialize(quad.getPredicate());
-        String o = serialize(quad.getObject());
+        String s = Utils.serialize(quad.getSubject());
+        String p = Utils.serialize(quad.getPredicate());
+        String o = Utils.serialize(quad.getObject());
         String g = null;
         if ( !quad.isDefaultGraphGenerated() ) {
-            g = serialize(quad.getGraph());
+            g = Utils.serialize(quad.getGraph());
         }
 
         // TODO: reuse hash from TDB NodeTableNative?
@@ -154,11 +143,5 @@ class SinkToContext implements Sink<Quad> {
     
     @Override public void flush() {}
     @Override public void close() {}
-    
-    private String serialize(Node node) {
-        StringWriter out = new StringWriter();
-        OutputLangUtils.output(out, node, null, NodeToLabel.createBNodeByLabelRaw());
-        return out.toString();
-    }
     
 }

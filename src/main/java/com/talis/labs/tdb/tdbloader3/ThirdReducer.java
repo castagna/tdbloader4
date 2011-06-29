@@ -28,7 +28,6 @@ import java.util.Map;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.openjena.atlas.lib.Hex;
@@ -83,6 +82,8 @@ public class ThirdReducer extends Reducer<LongQuadWritable, NullWritable, NullWr
 			}
 			out.write('\n');
 		}
+		context.progress();
+		
         if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
 	}
 	
@@ -107,7 +108,7 @@ public class ThirdReducer extends Reducer<LongQuadWritable, NullWritable, NullWr
 			outputs.get(filename).close();
 		}	
 		Location location = new Location(outLocal.toString());
-		for ( String indexName : ThirdDriver.indexNames ) {
+		for ( String indexName : Utils.indexNames ) {
 		    String indexFilename = location.absolute(indexName);
 		    if ( new File(indexFilename).exists() ) {
 		        CmdIndexBuild.main(location.getDirectoryPath(), indexName, indexFilename);

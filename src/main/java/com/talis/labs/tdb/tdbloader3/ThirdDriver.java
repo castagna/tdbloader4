@@ -35,19 +35,7 @@ public class ThirdDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdDriver.class);
     
-    public static String[] indexNames = new String[] {
-        "SPO",
-        "POS",
-        "OSP",
-        "GSPO",
-        "GPOS",
-        "GOSP",
-        "SPOG",
-        "POSG",
-        "OSPG"
-    };
-
-	public ThirdDriver () {
+    public ThirdDriver () {
 		super();
         if ( log.isDebugEnabled() ) log.debug("constructed with no configuration.");
 	}
@@ -70,11 +58,16 @@ public class ThirdDriver extends Configured implements Tool {
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		
-		job.setMapperClass(ThirdMapper.class);
-		job.setReducerClass(ThirdReducer.class);
 
 		job.setInputFormatClass(SequenceFileInputFormat.class);
+		
+		job.setMapperClass(ThirdMapper.class);
+		job.setMapOutputKeyClass(LongQuadWritable.class);
+		job.setMapOutputValueClass(NullWritable.class);
+
+		job.setReducerClass(ThirdReducer.class);
+		job.setOutputKeyClass(LongQuadWritable.class);
+		job.setOutputValueClass(NullWritable.class);
 		
 		// TODO: There must be a bug in the SNAPSHOTs of Hadoop
 		// see: http://markmail.org/thread/n3wqbozf6ow2cib6
@@ -93,14 +86,11 @@ public class ThirdDriver extends Configured implements Tool {
 		// 
 		job.setNumReduceTasks(1);
 
-		job.setOutputKeyClass(LongQuadWritable.class);
-		job.setOutputValueClass(NullWritable.class);
-		
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 	
 	public static void main(String[] args) throws Exception {
-        if ( log.isDebugEnabled() ) log.debug("main method: {}", FirstDriver.toString(args));
+        if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
 	    int exitCode = ToolRunner.run(new ThirdDriver(), args);
 		System.exit(exitCode);
 	}

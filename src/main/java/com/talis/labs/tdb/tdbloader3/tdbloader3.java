@@ -60,6 +60,7 @@ public class tdbloader3 extends Configured implements Tool {
         boolean overrideOutput = configuration.getBoolean("overrideOutput", false);
         boolean copyToLocal = configuration.getBoolean("copyToLocal", true);
         boolean verify = configuration.getBoolean("verify", false);
+        boolean nquadInputFormat = configuration.getBoolean("nquadInputFormat", false);
         
         if ( overrideOutput ) {
             fs.delete(new Path(args[1]), true);
@@ -68,6 +69,9 @@ public class tdbloader3 extends Configured implements Tool {
             fs.delete(new Path(args[1] + "_3"), true);
         }
 		
+        if ( nquadInputFormat ) {
+        	FirstDriver.setUseNQuadsInputFormat(true);
+        }
         FirstDriver first = new FirstDriver(configuration);
         first.run(new String[] { args[0], args[1] + "_1" });
         

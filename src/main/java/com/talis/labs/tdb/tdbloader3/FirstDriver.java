@@ -19,10 +19,12 @@ package com.talis.labs.tdb.tdbloader3;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
@@ -43,6 +45,14 @@ public class FirstDriver extends Configured implements Tool {
 	public FirstDriver (Configuration configuration) {
 		super(configuration);
         if ( log.isDebugEnabled() ) log.debug("constructed with configuration.");
+	}
+	
+	public static void setUseNQuadsInputFormat ( boolean flag ) {
+		useNQuadsInputFormat = flag;
+	}
+	
+	public static boolean getUseNQuadsInputFormat() {
+		return useNQuadsInputFormat;
 	}
 
 	@Override
@@ -65,30 +75,25 @@ public class FirstDriver extends Configured implements Tool {
 		} else {
 	        job.setMapperClass(FirstMapper.class);		    
 		}
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(Text.class);
+		
 		job.setReducerClass(FirstReducer.class);
-
-	    job.setOutputKeyClass(Text.class);
+	    job.setOutputKeyClass(LongWritable.class);
 	    job.setOutputValueClass(Text.class);
 		
 		// TODO: this is bad, how could we merge node tables?
 		job.setNumReduceTasks(1); 
+		
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 	
 	public static void main(String[] args) throws Exception {
-	    if ( log.isDebugEnabled() ) log.debug("main method: {}", toString(args));
+	    if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
 		int exitCode = ToolRunner.run(new FirstDriver(), args);
 		System.exit(exitCode);
-	}
-
-	public static String toString(String[] args) {
-        StringBuffer sb = new StringBuffer();
-        sb.append("{");
-        for ( String arg : args ) sb.append(arg).append(", ");
-        if ( sb.length() > 2 ) sb.delete(sb.length()-2, sb.length());
-        sb.append("}");
-        return sb.toString();
 	}
 	
 }

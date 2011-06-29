@@ -40,17 +40,12 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.util.LineReader;
-import org.openjena.riot.ErrorHandlerFactory;
-import org.openjena.riot.lang.LabelToNode;
 import org.openjena.riot.lang.LangNQuads;
-import org.openjena.riot.system.IRIResolver;
 import org.openjena.riot.system.ParserProfile;
-import org.openjena.riot.system.Prologue;
 import org.openjena.riot.tokens.Tokenizer;
 import org.openjena.riot.tokens.TokenizerFactory;
 
-import com.talis.labs.tdb.tdbloader3.MapReduceLabelToNode;
-import com.talis.labs.tdb.tdbloader3.MapReduceParserProfile;
+import com.talis.labs.tdb.tdbloader3.Utils;
 
 public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
 
@@ -69,8 +64,6 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
     private FSDataInputStream fileIn;
     private Seekable filePosition;
 
-    private Prologue prologue; 
-    private LabelToNode labelMapping;
     private ParserProfile profile;
     
     private int maxLineLength;
@@ -85,9 +78,7 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
         FileSplit split = (FileSplit) genericSplit;
         
         // RIOT configuration 
-        prologue = new Prologue(null, IRIResolver.createNoResolve()); 
-        labelMapping = new MapReduceLabelToNode(context.getJobID(), split.getPath());
-        profile = new MapReduceParserProfile(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
+        profile = Utils.createParserProfile(context.getJobID(), split.getPath());
         
         inputByteCounter = context.getCounter(FileInputFormat.COUNTER_GROUP, FileInputFormat.BYTES_READ);
         Configuration job = context.getConfiguration();

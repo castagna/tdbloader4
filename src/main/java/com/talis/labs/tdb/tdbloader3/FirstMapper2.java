@@ -17,7 +17,6 @@
 package com.talis.labs.tdb.tdbloader3;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 
@@ -25,12 +24,9 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.openjena.riot.out.NodeToLabel;
-import org.openjena.riot.out.OutputLangUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.talis.labs.tdb.tdbloader3.io.QuadWritable;
 
@@ -63,12 +59,12 @@ public class FirstMapper2 extends Mapper<LongWritable, QuadWritable, Text, Text>
     public void map (LongWritable key, QuadWritable value, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
         Quad quad = value.getQuad();
-        String s = serialize(quad.getSubject());
-        String p = serialize(quad.getPredicate());
-        String o = serialize(quad.getObject());
+        String s = Utils.serialize(quad.getSubject());
+        String p = Utils.serialize(quad.getPredicate());
+        String o = Utils.serialize(quad.getObject());
         String g = null;
         if ( !quad.isDefaultGraphGenerated() ) {
-            g = serialize(quad.getGraph());
+            g = Utils.serialize(quad.getGraph());
         }
 
         // TODO: reuse hash from TDB NodeTableNative?
@@ -116,10 +112,5 @@ public class FirstMapper2 extends Mapper<LongWritable, QuadWritable, Text, Text>
             log.debug("> ({}, {})", key, value);
         }
     }
-    
-    private String serialize(Node node) {
-        StringWriter out = new StringWriter();
-        OutputLangUtils.output(out, node, null, NodeToLabel.createBNodeByLabelRaw());
-        return out.toString();
-    }
+
 }

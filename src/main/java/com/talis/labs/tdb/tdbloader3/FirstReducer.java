@@ -28,7 +28,13 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.tools.ant.Location;
 import org.openjena.atlas.lib.Bytes;
+import org.openjena.atlas.logging.Log;
+import org.openjena.riot.Lang;
+import org.openjena.riot.system.ParserProfile;
 import org.openjena.riot.system.RiotLib;
+import org.openjena.riot.tokens.Token;
+import org.openjena.riot.tokens.Tokenizer;
+import org.openjena.riot.tokens.TokenizerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +48,7 @@ import com.hp.hpl.jena.tdb.lib.NodeLib;
 import com.hp.hpl.jena.tdb.store.Hash;
 import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SystemTDB;
+
 import com.talis.labs.tdb.setup.BlockMgrBuilder;
 import com.talis.labs.tdb.setup.BlockMgrBuilderStd;
 import com.talis.labs.tdb.setup.IndexBuilder;
@@ -84,8 +91,7 @@ public class FirstReducer extends Reducer<Text, Text, LongWritable, Text> {
     
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-	    // TODO: blank nodes? This is not right, the scope need to take into account the original filename
-		Node node = RiotLib.parse(key.toString());
+		Node node = parse(key.toString());
         Hash hash = new Hash(nodeHashToId.getRecordFactory().keyLength()) ;
         setHash(hash, node) ;
         byte k[] = hash.getBytes() ;        
@@ -110,6 +116,18 @@ public class FirstReducer extends Reducer<Text, Text, LongWritable, Text> {
         if ( objects != null ) objects.sync();
         if ( objects != null ) objects.close();
         if ( fs != null ) fs.completeLocalOutput(outRemote, outLocal);
+    }
+    
+    private static Node parse(String string) {
+    	ParserProfile profile = RiotLib.profile(Lang.NQUADS, null, null) ;
+        Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(string) ;
+        if ( ! tokenizer.hasNext() )
+            return null ;
+        Token t = tokenizer.next();
+        Node n = profile.create(null, t) ;
+        if ( tokenizer.hasNext() )
+            Log.warn(RiotLib.class, "String has more than one token in it: "+string) ;
+        return n ;
     }
     
 }

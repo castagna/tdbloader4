@@ -45,10 +45,11 @@ public class SecondReducer extends Reducer<Text, Text, NullWritable, LongQuadWri
 	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
 			String[] v = value.toString().split("\\|");
 			
-			if ( v[1].equals("S") ) s = Long.parseLong(v[0]);
-			if ( v[1].equals("P") ) p = Long.parseLong(v[0]);
-			if ( v[1].equals("O") ) o = Long.parseLong(v[0]);
-			if ( v[1].equals("G") ) g = Long.parseLong(v[0]);
+			long id = Long.parseLong(v[0]);
+			if ( v[1].equals("S") ) s = id;
+			if ( v[1].equals("P") ) p = id;
+			if ( v[1].equals("O") ) o = id;
+			if ( v[1].equals("G") ) g = id;
 		}		
 
 		if ( g != -1l ) {

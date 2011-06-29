@@ -17,7 +17,6 @@
 package com.talis.labs.tdb.tdbloader3;
 
 import java.io.IOException;
-import java.util.StringTokenizer;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -35,14 +34,9 @@ public class SecondMapper extends Mapper<LongWritable, Text, Text, Text> {
 	@Override
 	public void map (LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
-
-		StringTokenizer st = new StringTokenizer(value.toString());
-		String k = st.nextToken();
-		String v = st.nextToken();
-		String[] values = v.toString().split("\\|");
-
+		String[] values = value.toString().split("\\|");
 		outputKey.set(values[0]);
-		outputValue.set(k + "|" + values[1]);
+		outputValue.set(key + "|" + values[1]);
 		context.write(outputKey, outputValue);
         if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
         outputKey.clear();

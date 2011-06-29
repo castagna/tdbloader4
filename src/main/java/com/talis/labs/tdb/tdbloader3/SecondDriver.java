@@ -24,6 +24,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -61,13 +62,14 @@ public class SecondDriver extends Configured implements Tool {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
         FileInputFormat.setInputPathFilter(job, ExcludeNodeTableFilter.class);
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+		job.setInputFormatClass(SequenceFileInputFormat.class);
 		
 		job.setMapperClass(SecondMapper.class);
-		job.setReducerClass(SecondReducer.class);
-		
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
-		
+
+		job.setReducerClass(SecondReducer.class);
 		job.setOutputKeyClass(NullWritable.class);
 		job.setOutputValueClass(LongQuadWritable.class);
 		
@@ -77,7 +79,7 @@ public class SecondDriver extends Configured implements Tool {
 	}
 	
 	public static void main(String[] args) throws Exception {
-        if ( log.isDebugEnabled() ) log.debug("main method: {}", FirstDriver.toString(args));
+        if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
 	    int exitCode = ToolRunner.run(new SecondDriver(), args);
 		System.exit(exitCode);
 	}
