@@ -26,7 +26,11 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.openjena.atlas.lib.Sink;
+import org.openjena.riot.Lang;
+import org.openjena.riot.RiotParseException;
 import org.openjena.riot.lang.LangNQuads;
+import org.openjena.riot.lang.LangNTriples;
+import org.openjena.riot.lang.LangRIOT;
 import org.openjena.riot.system.ParserProfile;
 import org.openjena.riot.tokens.Tokenizer;
 import org.openjena.riot.tokens.TokenizerFactory;
@@ -39,18 +43,42 @@ public class FirstMapper extends Mapper<LongWritable, Text, Text, Text> {
 
     private static final Logger log = LoggerFactory.getLogger(FirstMapper.class);
     private ParserProfile profile;
-
+    private Lang lang ;
+    
     public void setup(Context context) throws IOException, InterruptedException {
         profile = Utils.createParserProfile(context.getJobID(), ((FileSplit) context.getInputSplit()).getPath());
+        String inputFileName = ((FileSplit)context.getInputSplit()).getPath().getName();
+        lang = Lang.guess(inputFileName, Lang.NQUADS);
+        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);
+        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(0);
+    	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(0);
     }
     
     @Override
     public void map (LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+        try {
+            SinkToContext sink = new SinkToContext(context);
+            Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(value.toString());
+            LangNQuads parser = new LangNQuads(tokenizer, profile, sink) ;
+            parser.parse();
+        } catch (RiotParseException e) {
+        	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
+        	if ( log.isDebugEnabled() ) log.debug("RiotParserException: " + e.getMessage() + " at line {} offending line is {}", key, value );
+        }
+    }
+    
+    public static LangRIOT getParser(Context context, ParserProfile profile, Lang lang, String str) {
         SinkToContext sink = new SinkToContext(context);
-        Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(value.toString());
-        LangNQuads parser = new LangNQuads(tokenizer, profile, sink) ;
-        parser.parse();
+        Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(str);
+        
+        if ( lang == Lang.NQUADS ) {
+        	// TODO:
+        	// return new LangNTriples(tokenizer, profile, sink) ;
+        	return new LangNQuads(tokenizer, profile, sink) ;
+        } else {
+        	return new LangNQuads(tokenizer, profile, sink) ;
+        }
     }
 
 }
@@ -93,6 +121,9 @@ class SinkToContext implements Sink<Quad> {
         String g = null;
         if ( !quad.isDefaultGraphGenerated() ) {
             g = Utils.serialize(quad.getGraph());
+            context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
+        } else {
+            context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);        	
         }
 
         // TODO: reuse hash from TDB NodeTableNative?

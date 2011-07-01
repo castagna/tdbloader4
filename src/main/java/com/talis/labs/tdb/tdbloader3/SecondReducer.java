@@ -33,6 +33,12 @@ public class SecondReducer extends Reducer<Text, Text, NullWritable, LongQuadWri
     private NullWritable outputKey = NullWritable.get();
     private LongQuadWritable outputValue = new LongQuadWritable();
 
+    protected void setup(Context context) throws IOException, InterruptedException {
+        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);
+        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(0);
+    	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(0);
+    };
+    
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		
@@ -46,16 +52,24 @@ public class SecondReducer extends Reducer<Text, Text, NullWritable, LongQuadWri
 			String[] v = value.toString().split("\\|");
 			
 			long id = Long.parseLong(v[0]);
-			if ( v[1].equals("S") ) s = id;
+			if ( v[1].equals("S") ) {
+				if ( s != -1l ) context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(1);
+				s = id; 
+			}
 			if ( v[1].equals("P") ) p = id;
 			if ( v[1].equals("O") ) o = id;
 			if ( v[1].equals("G") ) g = id;
-		}		
-
-		if ( g != -1l ) {
+		}
+		
+		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputValue.set(s, p, o, g);
+	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
 		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputValue.set(s, p, o);
+	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);
+		} else {
+	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
+        	if ( log.isWarnEnabled() ) log.warn("WARNING: unexpected values for key {}", key );
 		}
         context.write(outputKey, outputValue);
         if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);

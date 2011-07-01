@@ -36,6 +36,11 @@ public class FirstDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FirstDriver.class);
     private static boolean useNQuadsInputFormat = false;
+	public static final String TDBLOADER3_COUNTER_GROUPNAME = "TDBLoader3 Counters";
+	public static final String TDBLOADER3_COUNTER_MALFORMED = "Malformed";
+	public static final String TDBLOADER3_COUNTER_QUADS = "Quads (including duplicates)";
+	public static final String TDBLOADER3_COUNTER_TRIPLES = "Triples (including duplicates)";
+	public static final String TDBLOADER3_COUNTER_DUPLICATES = "Duplicates (quads or triples)";
     
 	public FirstDriver () {
 		super();
