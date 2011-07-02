@@ -67,6 +67,10 @@ public class tdbloader3 extends Configured implements Tool {
             fs.delete(new Path(args[1] + "_2"), true);
             fs.delete(new Path(args[1] + "_3"), true);
         }
+        
+        if ( copyToLocal ) {
+        	fs.mkdirs(new Path(args[1]));
+        }
 		
         if ( nquadInputFormat ) {
         	FirstDriver.setUseNQuadsInputFormat(true);

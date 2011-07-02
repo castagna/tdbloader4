@@ -81,11 +81,11 @@ public class ThirdDriver extends Configured implements Tool {
 		//    at javax.security.auth.Subject.doAs(Subject.java:396)
 		//    at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1153)
 		//    at org.apache.hadoop.mapred.Child.main(Child.java:217)
-		//
-		// job.setPartitionerClass(ThirdCustomPartitioner.class);
-		// job.setNumReduceTasks(9);
-		// 
-		job.setNumReduceTasks(1);
+		
+		job.setPartitionerClass(ThirdCustomPartitioner.class);
+		job.setNumReduceTasks(9);
+		 
+		// job.setNumReduceTasks(1);
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

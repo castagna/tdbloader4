@@ -20,7 +20,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -68,7 +70,15 @@ public class FirstDriver extends Configured implements Tool {
 			return -1;
 		}
 		
-		Job job = new Job(getConf());
+		Configuration configuration = getConf();
+
+		configuration.setBoolean("mapred.compress.map.output", true);
+		configuration.set("mapred.output.compression.type", "BLOCK");
+		configuration.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
+		
+		configuration.setInt("io.sort.factor", 100);
+		
+		Job job = new Job(configuration);
 		job.setJobName("first");
 		job.setJarByClass(getClass());
 		
@@ -92,6 +102,9 @@ public class FirstDriver extends Configured implements Tool {
 		job.setNumReduceTasks(1); 
 		
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+		SequenceFileOutputFormat.setCompressOutput(job, true);
+		SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+		SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

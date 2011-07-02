@@ -31,12 +31,9 @@ import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.Decompressor;
-import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.util.LineReader;
 import org.openjena.riot.lang.LangNQuads;
@@ -66,13 +63,13 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
     private ParserProfile profile;
     
     private int maxLineLength;
-    private Counter inputByteCounter;
+//    private Counter inputByteCounter;
 
     private CompressionCodecFactory compressionCodecs = null;
     private CompressionCodec codec;
     private Decompressor decompressor;
     
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+//    @SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
     public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException, InterruptedException {
         FileSplit split = (FileSplit) genericSplit;
@@ -80,7 +77,7 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
         // RIOT configuration 
         profile = Utils.createParserProfile(context.getJobID(), split.getPath());
         
-        inputByteCounter = ((MapContext)context).getCounter(FileInputFormat.Counter.BYTES_READ);
+//        inputByteCounter = ((MapContext)context).getCounter(FileInputFormat.Counter.BYTES_READ);
         Configuration job = context.getConfiguration();
         this.maxLineLength = job.getInt(MAX_LINE_LENGTH, Integer.MAX_VALUE);
         start = split.getStart();
@@ -133,7 +130,7 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
                 break;
             }
             pos += newSize;
-            inputByteCounter.increment(newSize);
+//            inputByteCounter.increment(newSize);
             if (newSize < maxLineLength) {
                 break;
             }

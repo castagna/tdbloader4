@@ -27,9 +27,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.openjena.atlas.lib.Sink;
 import org.openjena.riot.Lang;
-import org.openjena.riot.RiotParseException;
+import org.openjena.riot.RiotException;
 import org.openjena.riot.lang.LangNQuads;
-import org.openjena.riot.lang.LangNTriples;
 import org.openjena.riot.lang.LangRIOT;
 import org.openjena.riot.system.ParserProfile;
 import org.openjena.riot.tokens.Tokenizer;
@@ -62,7 +61,7 @@ public class FirstMapper extends Mapper<LongWritable, Text, Text, Text> {
             Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(value.toString());
             LangNQuads parser = new LangNQuads(tokenizer, profile, sink) ;
             parser.parse();
-        } catch (RiotParseException e) {
+        } catch (RiotException e) {
         	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
         	if ( log.isDebugEnabled() ) log.debug("RiotParserException: " + e.getMessage() + " at line {} offending line is {}", key, value );
         }
