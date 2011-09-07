@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -58,7 +58,10 @@ public class SecondDriver extends Configured implements Tool {
 			return -1;
 		}
 		
-		Job job = new Job(getConf());
+		Configuration configuration = getConf();
+        boolean useCompression = configuration.getBoolean("useCompression", false);
+		
+		Job job = new Job(configuration);
 		job.setJobName("second");
 		job.setJarByClass(getClass());
 		
@@ -77,9 +80,11 @@ public class SecondDriver extends Configured implements Tool {
 		job.setOutputValueClass(LongQuadWritable.class);
 		
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
-		SequenceFileOutputFormat.setCompressOutput(job, true);
-		SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
-		SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
+		if ( useCompression ) {
+			SequenceFileOutputFormat.setCompressOutput(job, true);
+			SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+			SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
+		}
 		
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

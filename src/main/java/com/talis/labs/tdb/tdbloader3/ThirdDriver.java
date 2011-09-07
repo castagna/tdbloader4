@@ -53,7 +53,10 @@ public class ThirdDriver extends Configured implements Tool {
 			return -1;
 		}
 		
-		Job job = new Job(getConf());
+		Configuration configuration = getConf();
+        boolean runLocal = configuration.getBoolean("runLocal", true);
+        
+		Job job = new Job(configuration);
 		job.setJobName("third");
 		job.setJarByClass(getClass());
 		
@@ -82,10 +85,12 @@ public class ThirdDriver extends Configured implements Tool {
 		//    at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1153)
 		//    at org.apache.hadoop.mapred.Child.main(Child.java:217)
 		
-		job.setPartitionerClass(ThirdCustomPartitioner.class);
-		job.setNumReduceTasks(9);
-		 
-		// job.setNumReduceTasks(1);
+		if ( runLocal ) {
+			job.setNumReduceTasks(1);			
+		} else {
+			job.setPartitionerClass(ThirdCustomPartitioner.class);
+			job.setNumReduceTasks(9);
+		}
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
