@@ -28,7 +28,7 @@ public class Utils {
 	    return sb.toString();
 	}
 
-	public static final NodeToLabel nodeToLabel = NodeToLabel.createBNodeByLabelRaw();
+	public static final NodeToLabel nodeToLabel = NodeToLabel.createBNodeByLabelAsGiven();
     public static String serialize(Node node) {
         StringWriter out = new StringWriter();
         OutputLangUtils.output(out, node, null, nodeToLabel);
