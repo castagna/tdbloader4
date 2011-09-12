@@ -42,6 +42,7 @@ import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
+import com.talis.labs.tdb.tdbloader3.dev.FirstDriverAlternative;
 
 public class tdbloader3 extends Configured implements Tool {
 
@@ -75,7 +76,8 @@ public class tdbloader3 extends Configured implements Tool {
         if ( nquadInputFormat ) {
         	FirstDriver.setUseNQuadsInputFormat(true);
         }
-        FirstDriver first = new FirstDriver(configuration);
+        // Tool first = new FirstDriver(configuration);
+        Tool first = new FirstDriverAlternative(configuration);
         first.run(new String[] { args[0], args[1] + "_1" });
         
         SecondDriver second = new SecondDriver(configuration);

@@ -19,6 +19,7 @@ import org.junit.Test;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
+import com.talis.labs.tdb.tdbloader3.dev.FirstDriverAlternative;
 
 public class TestMiniCluster {
 
@@ -50,7 +51,7 @@ public class TestMiniCluster {
     }
 
     @Test public void test() throws Exception {
-        String input = "src/test/resources/test-01" ;
+        String input = "src/test/resources/input" ;
         String output = "target/output" ;
         String[] args = new String[] {
                 "-conf", config, 
@@ -58,13 +59,17 @@ public class TestMiniCluster {
                 "-D", "copyToLocal=true", 
                 "-D", "verify=false", 
                 "-D", "nquadInputFormat=false", 
+                "-D", "runLocal=false",
                 input, 
                 output
         };
-        assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
-        DatasetGraphTDB dsgMem = tdbloader3.load(input);
-        DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;
-        assertTrue ( tdbloader3.dump(dsgMem, dsgDisk), tdbloader3.isomorphic ( dsgMem, dsgDisk ) );       
+        
+        ToolRunner.run(new FirstDriverAlternative(), args);
+
+//        assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
+//        DatasetGraphTDB dsgMem = tdbloader3.load(input);
+//        DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;
+//        assertTrue ( tdbloader3.dump(dsgMem, dsgDisk), tdbloader3.isomorphic ( dsgMem, dsgDisk ) );       
     }
 
 }
