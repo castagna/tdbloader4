@@ -1,5 +1,8 @@
 package com.talis.labs.tdb.tdbloader3;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -13,6 +16,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.hp.hpl.jena.tdb.base.file.Location;
+import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
+import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.talis.labs.tdb.tdbloader3.dev.tdbloader3;
 
 public class TestMiniCluster {
@@ -21,7 +27,7 @@ public class TestMiniCluster {
     private static MiniDFSCluster dfsCluster ; 
     private static MiniMRCluster mrCluster ;
     private static FileSystem fs ;
-    private static final int numNodes = 4 ;
+    private static final int numNodes = 2 ;
     private static final String config = "target/hadoop-localhost-test.xml" ;
     
     @BeforeClass public static void startCluster() throws IOException {
@@ -53,7 +59,7 @@ public class TestMiniCluster {
         String[] args = new String[] {
                 "-conf", config, 
                 "-D", "overrideOutput=true", 
-                "-D", "copyToLocal=false", 
+                "-D", "copyToLocal=true", 
                 "-D", "verify=false", 
                 "-D", "nquadInputFormat=false", 
                 "-D", "runLocal=false",
@@ -63,10 +69,10 @@ public class TestMiniCluster {
         
         ToolRunner.run(new tdbloader3(), args);
 
-//        assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
-//        DatasetGraphTDB dsgMem = tdbloader3.load(input);
-//        DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;
-//        assertTrue ( tdbloader3.dump(dsgMem, dsgDisk), tdbloader3.isomorphic ( dsgMem, dsgDisk ) );       
+        assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
+        DatasetGraphTDB dsgMem = tdbloader3.load(input);
+        DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;
+        assertTrue ( tdbloader3.dump(dsgMem, dsgDisk), tdbloader3.isomorphic ( dsgMem, dsgDisk ) );       
     }
 
 }

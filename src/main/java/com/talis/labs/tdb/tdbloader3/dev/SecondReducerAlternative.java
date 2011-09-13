@@ -16,6 +16,8 @@
 
 package com.talis.labs.tdb.tdbloader3.dev;
 
+import static com.hp.hpl.jena.tdb.lib.NodeLib.setHash;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -23,10 +25,13 @@ import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.openjena.atlas.lib.Bytes;
 import org.openjena.atlas.logging.Log;
 import org.openjena.riot.Lang;
 import org.openjena.riot.system.ParserProfile;
@@ -38,41 +43,100 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.tdb.nodetable.Nodec;
-import com.hp.hpl.jena.tdb.nodetable.NodecSSE;
+import com.hp.hpl.jena.tdb.base.file.FileSet;
+import com.hp.hpl.jena.tdb.base.file.Location;
+import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
+import com.hp.hpl.jena.tdb.base.record.Record;
+import com.hp.hpl.jena.tdb.base.record.RecordFactory;
+import com.hp.hpl.jena.tdb.index.Index;
+import com.hp.hpl.jena.tdb.lib.NodeLib;
+import com.hp.hpl.jena.tdb.store.Hash;
+import com.hp.hpl.jena.tdb.sys.Names;
+import com.hp.hpl.jena.tdb.sys.SystemTDB;
+import com.talis.labs.tdb.setup.BlockMgrBuilder;
+import com.talis.labs.tdb.setup.BlockMgrBuilderStd;
+import com.talis.labs.tdb.setup.IndexBuilder;
+import com.talis.labs.tdb.setup.IndexBuilderStd;
+import com.talis.labs.tdb.setup.ObjectFileBuilder;
+import com.talis.labs.tdb.setup.ObjectFileBuilderStd;
 import com.talis.labs.tdb.tdbloader3.TDBLoader3Exception;
 
 public class SecondReducerAlternative extends Reducer<Text, Text, LongWritable, Text> {
 	
     private static final Logger log = LoggerFactory.getLogger(SecondReducerAlternative.class);
     
-    private static Nodec nodec = new NodecSSE() ;
-	private long sum;
-	private String id;
-	private Text key;
 	private ArrayList<Long> offsets;
+	private long offset = 0L;
+
+    private Index nodeHashToId;
+    private ObjectFile objects;
+    private FileSystem fs;
+    private Path outLocal;
+    private Path outRemote;
 
     @Override
     public void setup(Context context) {
-    	sum = 0;
-        id = String.valueOf(context.getTaskAttemptID().getTaskID().getId());
-        key = new Text(id);
+        String id = String.valueOf(context.getTaskAttemptID().getTaskID().getId());
         
         log.debug("Loading offsets from DistributedCache...");
         offsets = loadOffsets(context);
         log.debug("Finished loading offsets from DistributedCache.");
 
+        // this is the offset this reducer needs to add (the sum of all his 'previous' peers) 
+        for (int i = 0; i < Integer.valueOf(id); i++) {
+        	offset += offsets.get(i);
+        }
+        log.debug("Reducer's number {} offset is {}", id, offset);
+
+        try {
+            fs = FileSystem.get(context.getConfiguration());
+            outRemote = new Path(FileOutputFormat.getWorkOutputPath(context), id);
+            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
+            fs.startLocalOutput(outRemote, outLocal);
+        } catch (Exception e) {
+            throw new TDBLoader3Exception(e);
+        }
+        Location location = new Location(outLocal.toString());
+        init(location);
+    }
+
+    private void init(Location location) {
+        ObjectFileBuilder objectFileBuilder = new ObjectFileBuilderStd() ;
+        BlockMgrBuilder blockMgrBuilder = new BlockMgrBuilderStd() ;
+        IndexBuilder indexBuilder = new IndexBuilderStd(blockMgrBuilder, blockMgrBuilder) ;
+        RecordFactory recordFactory = new RecordFactory(SystemTDB.LenNodeHash, SystemTDB.SizeOfNodeId) ;
+        nodeHashToId = indexBuilder.buildIndex(new FileSet(location, Names.indexNode2Id), recordFactory) ;
+        objects = objectFileBuilder.buildObjectFile(new FileSet(location, Names.indexId2Node), Names.extNodeData) ;
     }
 
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+		// we could avoid doing this, just generate an hash, id text file which we will be using to rebuild the B+Tree index at the end
 		Node node = parse(key.toString());
-		// TODO
+        Hash hash = new Hash(nodeHashToId.getRecordFactory().keyLength()) ;
+        setHash(hash, node) ;
+        byte k[] = hash.getBytes() ;        
+        Record r = nodeHashToId.getRecordFactory().create(k) ;
+        long id = NodeLib.encodeStore(node, objects) ;
+        Bytes.setLong(id, r.getValue(), 0) ;
+        nodeHashToId.add(r);
+
+        LongWritable _id = new LongWritable(id + offset);
+
+		for (Text value : values) {
+	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+			context.write(_id, value);
+	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", _id, value);
+		}
 	}
 
     @Override
     public void cleanup(Context context) throws IOException {
-    	// TODO
+        if ( nodeHashToId != null ) nodeHashToId.sync();
+        if ( nodeHashToId != null ) nodeHashToId.close();            
+        if ( objects != null ) objects.sync();
+        if ( objects != null ) objects.close();
+        if ( fs != null ) fs.completeLocalOutput(outRemote, outLocal);
     }
 
     private ArrayList<Long> loadOffsets(Context context) {

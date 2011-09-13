@@ -51,6 +51,8 @@ import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
+import com.talis.labs.tdb.tdbloader3.SecondDriver;
+import com.talis.labs.tdb.tdbloader3.ThirdDriver;
 
 public class tdbloader3 extends Configured implements Tool {
 
@@ -91,9 +93,12 @@ public class tdbloader3 extends Configured implements Tool {
         
         Tool second = new SecondDriverAlternative(configuration);
         second.run(new String[] { args[0], args[1] + "_2" });
+
+        Tool third = new SecondDriver(configuration);
+        third.run(new String[] { args[1] + "_2", args[1] + "_3" });
         
-//        Tool third = new ThirdDriver(configuration);
-//        third.run(new String[] { args[1] + "_2", args[1] + "_3" });
+        Tool fourth = new ThirdDriver(configuration);
+        fourth.run(new String[] { args[1] + "_3", args[1] + "_4" });
         
         if ( copyToLocal ) {
             Location location = new Location(args[1]);
@@ -101,8 +106,8 @@ public class tdbloader3 extends Configured implements Tool {
             dsgDisk.sync(); 
             dsgDisk.close();
 
-            copyToLocalFile(fs, new Path(args[1] + "_1"), new Path(args[1]));
-            copyToLocalFile(fs, new Path(args[1] + "_3"), new Path(args[1]));            
+            copyToLocalFile(fs, new Path(args[1] + "_2"), new Path(args[1]));
+            copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));            
         }
         
         if ( verify ) {

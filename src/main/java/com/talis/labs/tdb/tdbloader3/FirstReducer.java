@@ -26,7 +26,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.tools.ant.Location;
+
 import org.openjena.atlas.lib.Bytes;
 import org.openjena.atlas.logging.Log;
 import org.openjena.riot.Lang;
@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.tdb.base.file.FileSet;
+import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
 import com.hp.hpl.jena.tdb.base.record.Record;
 import com.hp.hpl.jena.tdb.base.record.RecordFactory;
@@ -85,8 +86,8 @@ public class FirstReducer extends Reducer<Text, Text, LongWritable, Text> {
         BlockMgrBuilder blockMgrBuilder = new BlockMgrBuilderStd() ;
         IndexBuilder indexBuilder = new IndexBuilderStd(blockMgrBuilder, blockMgrBuilder) ;
         RecordFactory recordFactory = new RecordFactory(SystemTDB.LenNodeHash, SystemTDB.SizeOfNodeId) ;
-        nodeHashToId = indexBuilder.buildIndex(new FileSet(location.getFileName(), Names.indexNode2Id), recordFactory) ;
-        objects = objectFileBuilder.buildObjectFile(new FileSet(location.getFileName(), Names.indexId2Node), Names.extNodeData) ;
+        nodeHashToId = indexBuilder.buildIndex(new FileSet(location, Names.indexNode2Id), recordFactory) ;
+        objects = objectFileBuilder.buildObjectFile(new FileSet(location, Names.indexId2Node), Names.extNodeData) ;
     }
     
 	@Override
