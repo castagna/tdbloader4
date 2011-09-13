@@ -14,24 +14,33 @@
  * limitations under the License.
  */
 
-package com.talis.labs.tdb.tdbloader3;
+package com.talis.labs.tdb.tdbloader3.dev;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
@@ -45,6 +54,8 @@ import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 public class tdbloader3 extends Configured implements Tool {
 
+    private static final Logger log = LoggerFactory.getLogger(tdbloader3.class);
+	
 	@Override
 	public int run(String[] args) throws Exception {
 		if ( args.length != 2 ) {
@@ -59,7 +70,6 @@ public class tdbloader3 extends Configured implements Tool {
         boolean overrideOutput = configuration.getBoolean("overrideOutput", false);
         boolean copyToLocal = configuration.getBoolean("copyToLocal", true);
         boolean verify = configuration.getBoolean("verify", false);
-        boolean nquadInputFormat = configuration.getBoolean("nquadInputFormat", false);
         
         if ( overrideOutput ) {
             fs.delete(new Path(args[1]), true);
@@ -72,17 +82,18 @@ public class tdbloader3 extends Configured implements Tool {
         	fs.mkdirs(new Path(args[1]));
         }
 		
-        if ( nquadInputFormat ) {
-        	FirstDriver.setUseNQuadsInputFormat(true);
-        }
-        Tool first = new FirstDriver(configuration);
+        Tool first = new FirstDriverAlternative(configuration);
         first.run(new String[] { args[0], args[1] + "_1" });
+
+        createOffsetsFile(fs, args[1] + "_1", args[1] + "_1");
+        Path offsets = new Path(args[1] + "_1", "offsets.txt");
+        DistributedCache.addCacheFile(offsets.toUri(), configuration);
         
-        Tool second = new SecondDriver(configuration);
-        second.run(new String[] { args[1] + "_1", args[1] + "_2" });
+        Tool second = new SecondDriverAlternative(configuration);
+        second.run(new String[] { args[0], args[1] + "_2" });
         
-        Tool third = new ThirdDriver(configuration);
-        third.run(new String[] { args[1] + "_2", args[1] + "_3" });
+//        Tool third = new ThirdDriver(configuration);
+//        third.run(new String[] { args[1] + "_2", args[1] + "_3" });
         
         if ( copyToLocal ) {
             Location location = new Location(args[1]);
@@ -108,6 +119,33 @@ public class tdbloader3 extends Configured implements Tool {
 	public static void main(String[] args) throws Exception {
 		int exitCode = ToolRunner.run(new tdbloader3(), args);
 		System.exit(exitCode);
+	}
+	
+	private void createOffsetsFile(FileSystem fs, String input, String output) throws IOException {
+		log.debug("Creating offsets file...");
+        Map<Long, Long> offsets = new TreeMap<Long, Long>();
+        FileStatus[] status = fs.listStatus(new Path(input));
+        for (FileStatus fileStatus : status) {
+        	Path file = fileStatus.getPath();
+        	if ( file.getName().startsWith("part-r-") ) {
+        		log.debug("Processing: {}", file.getName());
+       			BufferedReader in = new BufferedReader(new InputStreamReader(fs.open(file)));
+       			String line = in.readLine();
+       			String[] tokens = line.split("\\s");
+       			long partition = Long.valueOf(tokens[0]); 
+               	long offset = Long.valueOf(tokens[1]);
+               	log.debug("Partition {} has offset {}", partition, offset);
+               	offsets.put(partition, offset);
+        	}
+		}
+
+        Path outputPath = new Path(output, "offsets.txt");
+        PrintWriter out = new PrintWriter(new OutputStreamWriter( fs.create(outputPath)));
+        for (Long partition : offsets.keySet()) {
+			out.println(partition + "\t" + offsets.get(partition));
+		}
+        out.close();
+        log.debug("Offset file created.");
 	}
 	
 	private void copyToLocalFile ( FileSystem fs, Path src, Path dst ) throws FileNotFoundException, IOException {

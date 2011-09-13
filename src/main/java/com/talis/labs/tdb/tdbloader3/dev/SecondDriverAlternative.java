@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 import com.talis.labs.tdb.tdbloader3.Utils;
 import com.talis.labs.tdb.tdbloader3.io.NQuadsInputFormat;
 
-public class FirstDriverAlternative extends Configured implements Tool {
+public class SecondDriverAlternative extends Configured implements Tool {
 
-    private static final Logger log = LoggerFactory.getLogger(FirstDriverAlternative.class);
+    private static final Logger log = LoggerFactory.getLogger(SecondDriverAlternative.class);
     private static boolean useNQuadsInputFormat = false;
 	public static final String TDBLOADER3_COUNTER_GROUPNAME = "TDBLoader3 Counters";
 	public static final String TDBLOADER3_COUNTER_MALFORMED = "Malformed";
@@ -44,12 +44,12 @@ public class FirstDriverAlternative extends Configured implements Tool {
 	public static final String TDBLOADER3_COUNTER_TRIPLES = "Triples (including duplicates)";
 	public static final String TDBLOADER3_COUNTER_DUPLICATES = "Duplicates (quads or triples)";
     
-	public FirstDriverAlternative () {
+	public SecondDriverAlternative () {
 		super();
 		if ( log.isDebugEnabled() ) log.debug("constructed with no configuration.");
 	}
 
-	public FirstDriverAlternative (Configuration configuration) {
+	public SecondDriverAlternative (Configuration configuration) {
 		super(configuration);
         if ( log.isDebugEnabled() ) log.debug("constructed with configuration.");
 	}
@@ -94,9 +94,9 @@ public class FirstDriverAlternative extends Configured implements Tool {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(NullWritable.class);
 		
-		job.setReducerClass(FirstReducerAlternative.class);
-	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(LongWritable.class);
+		job.setReducerClass(SecondReducerAlternative.class);
+	    job.setOutputKeyClass(LongWritable.class);
+	    job.setOutputValueClass(Text.class);
 		
         if ( runLocal ) {
             job.setNumReduceTasks(1);           
@@ -111,7 +111,7 @@ public class FirstDriverAlternative extends Configured implements Tool {
 	
 	public static void main(String[] args) throws Exception {
 	    if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
-		int exitCode = ToolRunner.run(new FirstDriverAlternative(), args);
+		int exitCode = ToolRunner.run(new SecondDriverAlternative(), args);
 		System.exit(exitCode);
 	}
 	
