@@ -101,7 +101,8 @@ public class SecondDriverAlternative extends Configured implements Tool {
         if ( runLocal ) {
             job.setNumReduceTasks(1);           
         } else {
-            job.setNumReduceTasks(20);
+        	// number of reducers must be the same as in FirstDriverAlternative to ensure offsets are correct
+            job.setNumReduceTasks(FirstDriverAlternative.NUM_REDUCERS);
         }
 		
        	job.setOutputFormatClass(SequenceFileOutputFormat.class);

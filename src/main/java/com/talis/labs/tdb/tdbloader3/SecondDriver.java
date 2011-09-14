@@ -87,7 +87,7 @@ public class SecondDriver extends Configured implements Tool {
 			SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 			SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
 		}
-		
+
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 	

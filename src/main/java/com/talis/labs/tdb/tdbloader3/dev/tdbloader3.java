@@ -18,9 +18,13 @@ package com.talis.labs.tdb.tdbloader3.dev;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -37,6 +41,7 @@ import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
@@ -49,6 +54,7 @@ import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.TDBLoader;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
+import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.talis.labs.tdb.tdbloader3.SecondDriver;
@@ -96,39 +102,59 @@ public class tdbloader3 extends Configured implements Tool {
         Tool second = new SecondDriverAlternative(configuration);
         second.run(new String[] { args[0], args[1] + "_2" });
 
+        if ( copyToLocal ) {
+        	fs.copyToLocalFile(new Path(args[1] + "_2"), new Path(args[1] + "_2"));
+        }
+        
         Tool third = new SecondDriver(configuration);
         third.run(new String[] { args[1] + "_2", args[1] + "_3" });
         
-        if ( copyToLocal ) {
-        	fs.copyToLocalFile(new Path(args[1] + "_3"), new Path(args[1] + "_3"));
-        }
-        
         Tool fourth = new ThirdDriver(configuration);
         fourth.run(new String[] { args[1] + "_3", args[1] + "_4" });
-        
-        if ( copyToLocal ) {
-        	fs.copyToLocalFile(new Path(args[1] + "_4"), new Path(args[1] + "_4"));
-        }
         
         if ( copyToLocal ) {
             Location location = new Location(args[1]);
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
             dsgDisk.sync(); 
             dsgDisk.close();
+            
+            OutputStream out = new FileOutputStream(new File(args[1], Names.indexId2Node + ".dat"));
+            for ( int i = 0; i < FirstDriverAlternative.NUM_REDUCERS; i++ ) {
+            	Path inPath = new Path (args[1] + "_2" + File.separator + i + File.separator + Names.indexId2Node + ".dat");
+            	log.debug(inPath.toUri().toString());
+            	InputStream in = fs.open(inPath);
+            	IOUtils.copyBytes(in, out, configuration, false);
+            	in.close();
+            }
+            out.close();
 
-            copyToLocalFile(fs, new Path(args[1] + "_2"), new Path(args[1]));
             copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));            
         }
         
         if ( verify ) {
-            DatasetGraphTDB dsgMem = load(args[0]);
+            DatasetGraphTDB dsgMem = load(args[0], Location.mem());
             Location location = new Location(args[1]);
+            
+            // TODO: this is a temporary cheat for testing, it will get done properly
+            load(args[0], new Location(args[1] + "_tdb"));
+            copy ("nodes2id.dat", args[1] + "_tdb", args[1]);
+            copy ("nodes2id.idn", args[1] + "_tdb", args[1]);
+            
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
             boolean isomorphic = isomorphic ( dsgMem, dsgDisk );
             System.out.println ("> " + isomorphic);
         }
         
 		return 0;
+	}
+	
+	// TODO: this will go away!!
+	private void copy (String filename, String srcPath, String dstPath) throws IOException {
+		InputStream in = new FileInputStream (new File(srcPath, filename));
+		OutputStream out = new FileOutputStream (new File(dstPath, filename));
+        IOUtils.copyBytes(in, out, 4096);
+        in.close();
+        out.close();
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -202,14 +228,14 @@ public class tdbloader3 extends Configured implements Tool {
         return true;
     }
 
-    public static DatasetGraphTDB load(String inputPath) {
+    public static DatasetGraphTDB load(String inputPath, Location location) {
         List<String> urls = new ArrayList<String>();
         for (File file : new File(inputPath).listFiles()) {
             if (file.isFile()) {
                 urls.add(file.getAbsolutePath());
             }
         }
-        DatasetGraphTDB dsg = TDBFactory.createDatasetGraph();
+        DatasetGraphTDB dsg = TDBFactory.createDatasetGraph(location);
         TDBLoader.load(dsg, urls);
 
         return dsg;

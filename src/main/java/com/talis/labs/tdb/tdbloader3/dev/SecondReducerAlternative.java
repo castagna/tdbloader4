@@ -90,7 +90,10 @@ public class SecondReducerAlternative extends Reducer<Text, Text, LongWritable, 
 
         try {
             fs = FileSystem.get(context.getConfiguration());
-            outRemote = new Path(FileOutputFormat.getWorkOutputPath(context), id);
+            // TODO: here we have a problem... how to we take into account the current id in the output path?
+            // outRemote = new Path(FileOutputFormat.getWorkOutputPath(context), id);
+            outRemote = FileOutputFormat.getWorkOutputPath(context);
+            log.debug("outRemote is {}", outRemote);
             outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
             fs.startLocalOutput(outRemote, outLocal);
         } catch (Exception e) {
@@ -132,6 +135,11 @@ public class SecondReducerAlternative extends Reducer<Text, Text, LongWritable, 
 
     @Override
     public void cleanup(Context context) throws IOException {
+    	try {
+			super.cleanup(context);
+		} catch (InterruptedException e) {
+			throw new TDBLoader3Exception(e);
+		}
         if ( nodeHashToId != null ) nodeHashToId.sync();
         if ( nodeHashToId != null ) nodeHashToId.close();
         if ( objects != null ) objects.sync();

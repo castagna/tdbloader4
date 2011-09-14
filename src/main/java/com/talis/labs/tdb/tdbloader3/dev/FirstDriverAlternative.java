@@ -43,6 +43,8 @@ public class FirstDriverAlternative extends Configured implements Tool {
 	public static final String TDBLOADER3_COUNTER_QUADS = "Quads (including duplicates)";
 	public static final String TDBLOADER3_COUNTER_TRIPLES = "Triples (including duplicates)";
 	public static final String TDBLOADER3_COUNTER_DUPLICATES = "Duplicates (quads or triples)";
+	
+	public static final int NUM_REDUCERS = 3; 
     
 	public FirstDriverAlternative () {
 		super();
@@ -101,7 +103,7 @@ public class FirstDriverAlternative extends Configured implements Tool {
         if ( runLocal ) {
             job.setNumReduceTasks(1);           
         } else {
-            job.setNumReduceTasks(20);
+            job.setNumReduceTasks(NUM_REDUCERS); // TODO: make this configurable
         }
 
        	job.setOutputFormatClass(TextOutputFormat.class);

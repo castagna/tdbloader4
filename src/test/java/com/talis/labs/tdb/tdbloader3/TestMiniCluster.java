@@ -67,10 +67,8 @@ public class TestMiniCluster {
                 output
         };
         
-        ToolRunner.run(new tdbloader3(), args);
-
         assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
-        DatasetGraphTDB dsgMem = tdbloader3.load(input);
+        DatasetGraphTDB dsgMem = tdbloader3.load(input, Location.mem());
         DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;
         assertTrue ( tdbloader3.dump(dsgMem, dsgDisk), tdbloader3.isomorphic ( dsgMem, dsgDisk ) );       
     }
