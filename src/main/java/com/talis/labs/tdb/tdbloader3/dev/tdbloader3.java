@@ -82,7 +82,8 @@ public class tdbloader3 extends Configured implements Tool {
         }
         
         if ( copyToLocal ) {
-        	fs.mkdirs(new Path(args[1]));
+        	File path = new File(args[1]);
+        	path.mkdirs();
         }
 		
         Tool first = new FirstDriverAlternative(configuration);
@@ -92,28 +93,9 @@ public class tdbloader3 extends Configured implements Tool {
         Path offsets = new Path(args[1] + "_1", "offsets.txt");
         DistributedCache.addCacheFile(offsets.toUri(), configuration);
         
-        if ( copyToLocal ) {
-        	fs.copyToLocalFile(new Path(args[1] + "_1"), new Path(args[1] + "_1"));
-        }
-        
         Tool second = new SecondDriverAlternative(configuration);
         second.run(new String[] { args[0], args[1] + "_2" });
 
-        if ( copyToLocal ) {
-        	
-        	FileStatus[] statuses = fs.listStatus(new Path(args[1] + "_2"));
-        	for (FileStatus fileStatus : statuses) {
-				System.out.println(fileStatus.getPath());
-			}
-        	
-        	fs.copyToLocalFile(new Path(args[1] + "_2"), new Path(args[1] + "_2"));
-        }
-        
-        fs.close();
-        FileSystem.closeAll();
-        
-        System.exit(1) ;
-        
         Tool third = new SecondDriver(configuration);
         third.run(new String[] { args[1] + "_2", args[1] + "_3" });
         
@@ -127,8 +109,6 @@ public class tdbloader3 extends Configured implements Tool {
         if ( copyToLocal ) {
         	fs.copyToLocalFile(new Path(args[1] + "_4"), new Path(args[1] + "_4"));
         }
-        
-        System.exit(0) ;
         
         if ( copyToLocal ) {
             Location location = new Location(args[1]);

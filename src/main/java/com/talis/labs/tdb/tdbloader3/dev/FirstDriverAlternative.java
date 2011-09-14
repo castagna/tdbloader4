@@ -103,8 +103,8 @@ public class FirstDriverAlternative extends Configured implements Tool {
         } else {
             job.setNumReduceTasks(20);
         }
-		
-		job.setOutputFormatClass(TextOutputFormat.class);
+
+       	job.setOutputFormatClass(TextOutputFormat.class);
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

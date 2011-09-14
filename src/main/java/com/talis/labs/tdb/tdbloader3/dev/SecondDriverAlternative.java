@@ -20,17 +20,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.talis.labs.tdb.tdbloader3.FirstMapper2;
 import com.talis.labs.tdb.tdbloader3.Utils;
 import com.talis.labs.tdb.tdbloader3.io.NQuadsInputFormat;
 
@@ -90,9 +90,9 @@ public class SecondDriverAlternative extends Configured implements Tool {
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         job.setInputFormatClass(NQuadsInputFormat.class);
-        job.setMapperClass(FirstMapperAlternative.class);		    
+        job.setMapperClass(FirstMapper2.class);  
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(NullWritable.class);
+		job.setMapOutputValueClass(Text.class);
 		
 		job.setReducerClass(SecondReducerAlternative.class);
 	    job.setOutputKeyClass(LongWritable.class);
@@ -104,7 +104,7 @@ public class SecondDriverAlternative extends Configured implements Tool {
             job.setNumReduceTasks(20);
         }
 		
-		job.setOutputFormatClass(TextOutputFormat.class);
+       	job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

@@ -64,7 +64,7 @@ public class ThirdDriver extends Configured implements Tool {
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 		job.setInputFormatClass(SequenceFileInputFormat.class);
-		
+
 		job.setMapperClass(ThirdMapper.class);
 		job.setMapOutputKeyClass(LongQuadWritable.class);
 		job.setMapOutputValueClass(NullWritable.class);

@@ -1,12 +1,17 @@
 TODO
 ----
 
- - Backport to Hadoop v0.20.203.0?
-
  - How to avoid copying the same jar each time we launch a MapReduce job?
    see: http://markmail.org/thread/sxnq4ini5fb3tivm
 
  - Use custom Writable objects instead of Text and binary files where possible.
    see: http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/common/IntPairWritable.java
 
- - ...
+ - We could leave the first MapReduce job unchanged (but compute the offsets). Pass the offset to the second MapReduce job mapper and fix the offsets there. (Kudos to Charles Clare for this).
+
+ - We need to rebuild the B+Tree index for the node table, using records with two keys only (rather than three or four).
+ 
+ - To make easier for people to debug, SequenceFiles should be optional!
+
+ - Add acknoledgment|credits section to thank: Sam, Justin, Charles, Alan, etc...
+

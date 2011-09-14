@@ -58,6 +58,8 @@ public class SecondDriver extends Configured implements Tool {
 			return -1;
 		}
 		
+		log.debug("input: {}, output: {}", args[0], args[1]);
+		
 		Configuration configuration = getConf();
         boolean useCompression = configuration.getBoolean("useCompression", false);
 		
@@ -69,7 +71,7 @@ public class SecondDriver extends Configured implements Tool {
         FileInputFormat.setInputPathFilter(job, ExcludeNodeTableFilter.class);
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-		job.setInputFormatClass(SequenceFileInputFormat.class);
+		job.setInputFormatClass(SequenceFileInputFormat.class);			
 		
 		job.setMapperClass(SecondMapper.class);
 		job.setMapOutputKeyClass(Text.class);
