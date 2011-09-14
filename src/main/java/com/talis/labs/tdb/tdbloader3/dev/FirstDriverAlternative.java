@@ -83,7 +83,7 @@ public class FirstDriverAlternative extends Configured implements Tool {
         configuration.setInt("io.sort.factor", 100);
 
 		Job job = new Job(configuration);
-		job.setJobName("first");
+		job.setJobName("first-alternative");
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));

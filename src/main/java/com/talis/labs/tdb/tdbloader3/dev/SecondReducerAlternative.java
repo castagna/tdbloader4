@@ -132,8 +132,13 @@ public class SecondReducerAlternative extends Reducer<Text, Text, LongWritable, 
 
     @Override
     public void cleanup(Context context) throws IOException {
+        try {
+			super.cleanup(context);
+		} catch (InterruptedException e) {
+			throw new TDBLoader3Exception(e);
+		}
         if ( nodeHashToId != null ) nodeHashToId.sync();
-        if ( nodeHashToId != null ) nodeHashToId.close();            
+        if ( nodeHashToId != null ) nodeHashToId.close();
         if ( objects != null ) objects.sync();
         if ( objects != null ) objects.close();
         if ( fs != null ) fs.completeLocalOutput(outRemote, outLocal);

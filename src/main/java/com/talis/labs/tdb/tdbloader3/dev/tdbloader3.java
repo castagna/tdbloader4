@@ -78,6 +78,7 @@ public class tdbloader3 extends Configured implements Tool {
             fs.delete(new Path(args[1] + "_1"), true);
             fs.delete(new Path(args[1] + "_2"), true);
             fs.delete(new Path(args[1] + "_3"), true);
+            fs.delete(new Path(args[1] + "_4"), true);
         }
         
         if ( copyToLocal ) {
@@ -91,14 +92,43 @@ public class tdbloader3 extends Configured implements Tool {
         Path offsets = new Path(args[1] + "_1", "offsets.txt");
         DistributedCache.addCacheFile(offsets.toUri(), configuration);
         
+        if ( copyToLocal ) {
+        	fs.copyToLocalFile(new Path(args[1] + "_1"), new Path(args[1] + "_1"));
+        }
+        
         Tool second = new SecondDriverAlternative(configuration);
         second.run(new String[] { args[0], args[1] + "_2" });
 
+        if ( copyToLocal ) {
+        	
+        	FileStatus[] statuses = fs.listStatus(new Path(args[1] + "_2"));
+        	for (FileStatus fileStatus : statuses) {
+				System.out.println(fileStatus.getPath());
+			}
+        	
+        	fs.copyToLocalFile(new Path(args[1] + "_2"), new Path(args[1] + "_2"));
+        }
+        
+        fs.close();
+        FileSystem.closeAll();
+        
+        System.exit(1) ;
+        
         Tool third = new SecondDriver(configuration);
         third.run(new String[] { args[1] + "_2", args[1] + "_3" });
         
+        if ( copyToLocal ) {
+        	fs.copyToLocalFile(new Path(args[1] + "_3"), new Path(args[1] + "_3"));
+        }
+        
         Tool fourth = new ThirdDriver(configuration);
         fourth.run(new String[] { args[1] + "_3", args[1] + "_4" });
+        
+        if ( copyToLocal ) {
+        	fs.copyToLocalFile(new Path(args[1] + "_4"), new Path(args[1] + "_4"));
+        }
+        
+        System.exit(0) ;
         
         if ( copyToLocal ) {
             Location location = new Location(args[1]);
