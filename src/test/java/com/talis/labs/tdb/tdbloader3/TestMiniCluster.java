@@ -60,7 +60,7 @@ public class TestMiniCluster {
                 "-conf", config, 
                 "-D", "overrideOutput=true", 
                 "-D", "copyToLocal=true", 
-                "-D", "verify=false", 
+                "-D", "verify=true", 
                 "-D", "nquadInputFormat=false", 
                 "-D", "runLocal=false",
                 input, 

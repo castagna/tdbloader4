@@ -128,8 +128,8 @@ public class tdbloader3 extends Configured implements Tool {
             
             // TODO: this is a temporary cheat for testing, it will get done properly
             load(args[0], new Location(args[1] + "_tdb"));
-            copy ("nodes2id.dat", args[1] + "_tdb", args[1]);
-            copy ("nodes2id.idn", args[1] + "_tdb", args[1]);
+            copy ("node2id.dat", args[1] + "_tdb", args[1]);
+            copy ("node2id.idn", args[1] + "_tdb", args[1]);
             
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
             boolean isomorphic = isomorphic ( dsgMem, dsgDisk );
@@ -210,7 +210,7 @@ public class tdbloader3 extends Configured implements Tool {
         for (String pathName : paths.keySet()) {
         	Path path = new Path(src, paths.get(pathName));
         	log.debug("Concatenating {} into {}...", path.toUri(), outFile.getAbsoluteFile());
-        	InputStream in = fs.open(path);
+        	InputStream in = fs.open(new Path(path, Names.indexId2Node + ".dat"));
         	IOUtils.copyBytes(in, out, configuration, false);
         	in.close();			
 		}
