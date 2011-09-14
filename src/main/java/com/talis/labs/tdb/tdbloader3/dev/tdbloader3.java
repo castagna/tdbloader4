@@ -208,9 +208,9 @@ public class tdbloader3 extends Configured implements Tool {
 		File outFile = new File(outPath, Names.indexId2Node + ".dat");
         OutputStream out = new FileOutputStream(outFile);
         for (String pathName : paths.keySet()) {
-        	Path path = paths.get(pathName);
-        	log.debug("Concatenating {} into {}...", pathName, outFile.getAbsoluteFile());
-        	InputStream in = fs.open(new Path(src, path));
+        	Path path = new Path(src, paths.get(pathName));
+        	log.debug("Concatenating {} into {}...", path.toUri(), outFile.getAbsoluteFile());
+        	InputStream in = fs.open(path);
         	IOUtils.copyBytes(in, out, configuration, false);
         	in.close();			
 		}
