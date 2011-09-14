@@ -117,17 +117,8 @@ public class tdbloader3 extends Configured implements Tool {
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
             dsgDisk.sync(); 
             dsgDisk.close();
-            
-            OutputStream out = new FileOutputStream(new File(args[1], Names.indexId2Node + ".dat"));
-            for ( int i = 0; i < FirstDriverAlternative.NUM_REDUCERS; i++ ) {
-            	Path inPath = new Path (args[1] + "_2" + File.separator + i + File.separator + Names.indexId2Node + ".dat");
-            	log.debug(inPath.toUri().toString());
-            	InputStream in = fs.open(inPath);
-            	IOUtils.copyBytes(in, out, configuration, false);
-            	in.close();
-            }
-            out.close();
 
+            mergeToLocalFile(fs, new Path(args[1] + "_2"), args[1], configuration);
             copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));            
         }
         
@@ -203,6 +194,29 @@ public class tdbloader3 extends Configured implements Tool {
         }
 	}
 
+	private void mergeToLocalFile ( FileSystem fs, Path src, String outPath, Configuration configuration ) throws FileNotFoundException, IOException {
+		FileStatus[] status = fs.listStatus(src);
+		Map<String, Path> paths = new TreeMap<String, Path>();
+		for ( FileStatus fileStatus : status ) {
+            Path path = fileStatus.getPath();
+            String pathName = path.getName();
+            if ( pathName.startsWith("second-alternative_") ) {
+            	paths.put(pathName, path);
+            }
+        }
+
+		File outFile = new File(outPath, Names.indexId2Node + ".dat");
+        OutputStream out = new FileOutputStream(outFile);
+        for (String pathName : paths.keySet()) {
+        	Path path = paths.get(pathName);
+        	log.debug("Concatenating {} into {}...", pathName, outFile.getAbsoluteFile());
+        	InputStream in = fs.open(new Path(src, path));
+        	IOUtils.copyBytes(in, out, configuration, false);
+        	in.close();			
+		}
+		out.close();
+	}
+	
     public static boolean isomorphic(DatasetGraphTDB dsgMem, DatasetGraphTDB dsgDisk) {
         if (!dsgMem.getDefaultGraph().isIsomorphicWith(dsgDisk.getDefaultGraph()))
             return false;

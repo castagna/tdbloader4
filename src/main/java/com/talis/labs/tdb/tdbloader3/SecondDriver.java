@@ -102,6 +102,6 @@ public class SecondDriver extends Configured implements Tool {
 class ExcludeNodeTableFilter implements PathFilter {
     public boolean accept(Path p) {
         String name = p.getName();
-        return !name.startsWith("node") && !name.startsWith("first_");
+        return !name.startsWith("node") && !name.startsWith("first_") && !name.startsWith("second-alternative_");
     }
 }
