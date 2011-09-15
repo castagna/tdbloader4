@@ -17,6 +17,7 @@
 package com.talis.labs.tdb.tdbloader3.dev;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -55,7 +56,11 @@ public class FirstReducerAlternative extends Reducer<Text, Text, Text, LongWrita
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		Node node = parse(key.toString());
-		sum += nodec.maxSize(node);
+		
+		ByteBuffer bb = ByteBuffer.allocate(nodec.maxSize(node));
+		int len = nodec.encode(node, bb, null);
+		sum += 4 + len; // 4 is the overhead to store the length of the ByteBuffer
+
 		if ( log.isDebugEnabled() ) log.debug("< {}: ({}, (null))", id, key);
 	}
 

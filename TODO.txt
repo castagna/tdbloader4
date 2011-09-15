@@ -11,7 +11,7 @@ TODO
 
  - We need to rebuild the B+Tree index for the node table, using records with two keys only (rather than three or four).
  
- - To make easier for people to debug, SequenceFiles should be optional!
+ - To make easier for people to debug, SequenceFiles should be optional! This is not possible (== not easy).
 
- - Add acknoledgment|credits section to thank: Sam, Justin, Charles, Alan, etc...
+ - Add acknowledgments|credits section to thank: Sam, Justin, Charles, Alan, etc...
 
