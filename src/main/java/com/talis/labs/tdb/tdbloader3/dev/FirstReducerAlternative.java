@@ -41,7 +41,8 @@ public class FirstReducerAlternative extends Reducer<Text, Text, Text, LongWrita
 	
     private static final Logger log = LoggerFactory.getLogger(FirstReducerAlternative.class);
     
-    private static Nodec nodec = new NodecSSE() ;
+    private Nodec nodec = new NodecSSE() ;
+
 	private long sum;
 	private String id;
 	private Text key;
