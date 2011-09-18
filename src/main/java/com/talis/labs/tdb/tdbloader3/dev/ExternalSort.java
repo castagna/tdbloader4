@@ -13,6 +13,8 @@ import java.io.OutputStream;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.openjena.atlas.data.SerializationFactory;
 import org.openjena.atlas.data.SortedDataBag;
@@ -28,23 +30,29 @@ public class ExternalSort {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
+        boolean compression = false ;
         
         if ( args.length != 2 ) {
             System.out.println("Usage: ExternalSort <input> <output>") ;
             System.exit(0) ;
         }
         
-        for ( int i = 3; i < 6; i++ ) {
-            int n = 100 * (int)Math.round(Math.pow(10, i)) ;
+        for ( int i = 5; i < 9; i++ ) {
+            int n = (int)Math.round(Math.pow(10, i)) ;
             System.out.println("------------------------------");
-            generateRandomBinaryData(n, args[0] + ".dat") ;
-            generateRandomTextData(n, args[0] + ".txt") ;
-            sortBinaryData(args[0] + ".dat", args[1] + ".dat") ;
-            sortTextData(n, args[0] + ".txt", args[1] + ".txt") ;
+            generateRandomBinaryData(n, args[0] + ".dat", compression) ;
+            generateRandomTextData(n, args[0] + ".txt", compression) ;
+            sortBinaryData(args[0] + ".dat", args[1] + ".dat", compression) ;
+            sortTextData(n, args[0] + ".txt", args[1] + ".txt", compression) ;
+            System.out.println("------------------------------");
+            generateRandomBinaryData(n, args[0] + ".dat", !compression) ;
+            generateRandomTextData(n, args[0] + ".txt", !compression) ;
+            sortBinaryData(args[0] + ".dat", args[1] + ".dat", !compression) ;
+            sortTextData(n, args[0] + ".txt", args[1] + ".txt", !compression) ;
         }
     }
     
-    public static void sortBinaryData(String input, String output) throws FileNotFoundException {
+    public static void sortBinaryData(String input, String output, boolean compression) throws IOException {
         long start = System.currentTimeMillis() ;
         ThresholdPolicyCount<Tuple<Long>> policy = new ThresholdPolicyCount<Tuple<Long>>(1000000);
         SerializationFactory<Tuple<Long>> serializerFactory = new TupleSerializationFactory();
@@ -52,7 +60,12 @@ public class ExternalSort {
         SortedDataBag<Tuple<Long>> sortedDataBag = new SortedDataBag<Tuple<Long>>(policy, serializerFactory, comparator);
 
         long count = 0L;
-        TupleInputStream in = new TupleInputStream(new FileInputStream(input), 3) ;
+        TupleInputStream in ;
+        if ( compression ) {
+            in = new TupleInputStream(new GZIPInputStream(new FileInputStream(input + ".gz")), 3) ;
+        } else {
+            in = new TupleInputStream(new FileInputStream(input), 3) ;
+        }
         while ( in.hasNext() ) {
             sortedDataBag.add( in.next() ) ;
             count++;
@@ -66,33 +79,48 @@ public class ExternalSort {
         out.close() ;
         sortedDataBag.close() ;
         long stop = System.currentTimeMillis() ;
-        System.out.println ("Sort(binary): " + count + " in " + (stop-start) + "ms") ;                
+        System.out.println ("Sort(binary" + (compression?" compressed":"") + "): " + count + " in " + (stop-start) + "ms") ;                
     }
     
-    public static void sortTextData(long n, String input, String output) throws IOException, InterruptedException {
+    public static void sortTextData(long n, String input, String output, boolean compression) throws IOException, InterruptedException {
         long start = System.currentTimeMillis() ;
-        Process p = new ProcessBuilder("/bin/sh", "-c", "/usr/bin/sort -u -k1,1 -k2,2 -k3,3 < " + input + " > " + output).start() ;
+        Process p ;
+        if ( compression ) {
+            p = new ProcessBuilder("/bin/sh", "-c", "/bin/gunzip -c " + input + ".gz | /usr/bin/sort -u -k1,1 -k2,2 -k3,3 - > " + output).start() ;
+        } else {
+            p = new ProcessBuilder("/bin/sh", "-c", "/usr/bin/sort -u -k1,1 -k2,2 -k3,3 < " + input + " > " + output).start() ;
+        }
         p.waitFor() ;
         long stop = System.currentTimeMillis() ;
-        System.out.println ("Sort(text)  : " + n + " in " + (stop-start) + "ms") ;                
+        System.out.println ("Sort(text" + (compression?" compressed":"") + ")  : " + n + " in " + (stop-start) + "ms") ;                
     }
 
-    public static void generateRandomBinaryData(int n, String output) throws FileNotFoundException {
+    public static void generateRandomBinaryData(int n, String output, boolean compression) throws IOException {
         long start = System.currentTimeMillis() ;
         Random r = new Random() ;
-        TupleOutputStream out = new TupleOutputStream(new FileOutputStream (output)) ;
+        TupleOutputStream out ;
+        if ( compression ) {
+            out = new TupleOutputStream(new GZIPOutputStream(new FileOutputStream (output + ".gz"))) ;
+        } else {
+            out = new TupleOutputStream(new FileOutputStream (output)) ;
+        }
         for ( int i = 0; i < n; i++ ) {
             out.send(Tuple.create(r.nextLong(), r.nextLong(), r.nextLong())) ;
         }
         out.close() ;
         long stop = System.currentTimeMillis() ;
-        System.out.println ("Gen(binary) : " + n + " in " + (stop-start) + "ms") ;                
+        System.out.println ("Gen(binary" + (compression?" compressed":"") + ") : " + n + " in " + (stop-start) + "ms") ;                
     }
 
-    public static void generateRandomTextData(int n, String output) throws IOException {
+    public static void generateRandomTextData(int n, String output, boolean compression) throws IOException {
         long start = System.currentTimeMillis() ;
         Random r = new Random() ;
-        OutputStream out = new BufferedOutputStream ( new FileOutputStream(output)) ;
+        OutputStream out ;
+        if ( compression ) {
+            out = new BufferedOutputStream (new GZIPOutputStream(new FileOutputStream(output + ".gz"))) ;
+        } else {
+            out = new BufferedOutputStream (new FileOutputStream(output)) ;
+        }
         for ( int i = 0; i < n; i++ ) {
             out.write(Utils.toHex(r.nextLong())) ;
             out.write(' ') ;
@@ -104,7 +132,7 @@ public class ExternalSort {
         }
         out.close();
         long stop = System.currentTimeMillis() ;
-        System.out.println ("Gen(text)   : " + n + " in " + (stop-start) + "ms") ;                
+        System.out.println ("Gen(text" + (compression?" compressed":"") + ")   : " + n + " in " + (stop-start) + "ms") ;                
     }
 }
 
