@@ -1,8 +1,6 @@
 TODO
 ----
 
- - Fix TestScriptedLocal tests... why do they fail?
-
  - How to avoid copying the same jar each time we launch a MapReduce job?
    see: http://markmail.org/thread/sxnq4ini5fb3tivm
 

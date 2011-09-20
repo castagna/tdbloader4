@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 public class FourthDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FourthDriver.class);
+
+    public static final String NAME = "fourth";
     
     public FourthDriver () {
 		super();
@@ -59,7 +61,7 @@ public class FourthDriver extends Configured implements Tool {
         boolean runLocal = configuration.getBoolean("runLocal", true);
         
 		Job job = new Job(configuration);
-		job.setJobName("third");
+		job.setJobName(NAME);
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
@@ -90,7 +92,7 @@ public class FourthDriver extends Configured implements Tool {
 		if ( runLocal ) {
 			job.setNumReduceTasks(1);			
 		} else {
-			job.setPartitionerClass(ThirdCustomPartitioner.class);
+			job.setPartitionerClass(FourthCustomPartitioner.class);
 			job.setNumReduceTasks(9);
 		}
 

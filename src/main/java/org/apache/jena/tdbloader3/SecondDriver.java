@@ -37,6 +37,9 @@ import org.slf4j.LoggerFactory;
 public class SecondDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(SecondDriver.class);
+
+    public static final String NAME = "second";
+    
 	public static final String TDBLOADER3_COUNTER_GROUPNAME = "TDBLoader3 Counters";
 	public static final String TDBLOADER3_COUNTER_MALFORMED = "Malformed";
 	public static final String TDBLOADER3_COUNTER_QUADS = "Quads (including duplicates)";
@@ -73,7 +76,7 @@ public class SecondDriver extends Configured implements Tool {
         configuration.setInt("io.sort.factor", 100);
 
 		Job job = new Job(configuration);
-		job.setJobName("second-alternative");
+		job.setJobName(NAME);
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));

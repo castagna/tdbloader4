@@ -53,7 +53,11 @@ public class TestScriptedMiniMRCluster extends AbstractMiniMRClusterTest {
     }
     
     @Before public void setup() {
-    	FileOps.clearDirectory(output) ;
+    	if ( FileOps.exists(output) ) {
+        	FileOps.clearDirectory(output) ;    		
+    	} else {
+        	FileOps.ensureDir(output);    		
+    	}
     }
 
     @Parameters
@@ -77,6 +81,7 @@ public class TestScriptedMiniMRCluster extends AbstractMiniMRClusterTest {
         String[] args = new String[] {
                 "-conf", config, 
         		"-D", "overrideOutput=true", 
+        		"-D", "useCompression=false", 
         		"-D", "copyToLocal=true", 
         		"-D", "verify=false", 
                 "-D", "runLocal=false",

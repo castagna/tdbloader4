@@ -26,7 +26,6 @@ import java.util.Collection;
 
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -50,7 +49,11 @@ public class TestScriptedLocal {
 	};
 
     @Before public void setup() {
-    	FileOps.clearDirectory(output) ;
+    	if ( FileOps.exists(output) ) {
+        	FileOps.clearDirectory(output) ;    		
+    	} else {
+        	FileOps.ensureDir(output);    		
+    	}
     }
 	
     @Parameters
@@ -66,7 +69,7 @@ public class TestScriptedLocal {
         this.output = output ;
     }
     
-    @Ignore
+    // @Ignore
     @Test public void test() throws Exception { 
     	run (input, output); 
     }
@@ -75,7 +78,7 @@ public class TestScriptedLocal {
         String[] args = new String[] {
         		"-conf", "conf/hadoop-local.xml", 
         		"-D", "overrideOutput=true", 
-        		"-D", "useCompression=true", 
+        		"-D", "useCompression=false", 
         		"-D", "copyToLocal=true", 
         		"-D", "verify=false", 
         		"-D", "runLocal=true",
@@ -84,7 +87,8 @@ public class TestScriptedLocal {
         };
         assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
         DatasetGraphTDB dsgMem = tdbloader3.load(input);
-        DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;
+        Location location = new Location(output);
+        DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
         assertTrue ( tdbloader3.dump(dsgMem, dsgDisk), tdbloader3.isomorphic ( dsgMem, dsgDisk ) );        
     }
     

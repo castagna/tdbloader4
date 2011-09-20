@@ -23,7 +23,7 @@ import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.jena.tdbloader3.io.LongQuadWritable;
 
 
-public class ThirdCustomPartitioner extends Partitioner<LongQuadWritable, NullWritable>{
+public class FourthCustomPartitioner extends Partitioner<LongQuadWritable, NullWritable>{
 
 	@Override
 	public int getPartition(LongQuadWritable key, NullWritable value, int numPartitions) {

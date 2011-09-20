@@ -81,6 +81,7 @@ public class tdbloader3 extends Configured implements Tool {
         boolean overrideOutput = configuration.getBoolean("overrideOutput", false);
         boolean copyToLocal = configuration.getBoolean("copyToLocal", true);
         boolean verify = configuration.getBoolean("verify", false);
+        boolean runLocal = configuration.getBoolean("runLocal", false);
         
         FileSystem fs = FileSystem.get(configuration);
         if ( overrideOutput ) {
@@ -91,7 +92,7 @@ public class tdbloader3 extends Configured implements Tool {
             fs.delete(new Path(args[1] + "_4"), true);
         }
         
-        if ( copyToLocal ) {
+        if ( ( copyToLocal ) || ( runLocal ) ) {
         	File path = new File(args[1]);
         	path.mkdirs();
         }
@@ -108,7 +109,7 @@ public class tdbloader3 extends Configured implements Tool {
 
         Tool third = new ThirdDriver(configuration);
         third.run(new String[] { args[1] + "_2", args[1] + "_3" });
-        
+
         Tool fourth = new FourthDriver(configuration);
         fourth.run(new String[] { args[1] + "_3", args[1] + "_4" });
         
@@ -117,7 +118,7 @@ public class tdbloader3 extends Configured implements Tool {
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
             dsgDisk.sync(); 
             dsgDisk.close();
-
+        	
             new File(args[1], "nodes.dat").delete() ;
             mergeToLocalFile(fs, new Path(args[1] + "_2"), args[1], configuration);
             copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));
@@ -180,7 +181,7 @@ public class tdbloader3 extends Configured implements Tool {
 		for ( FileStatus fileStatus : status ) {
             Path path = fileStatus.getPath();
             String pathName = path.getName();
-            if ( pathName.startsWith("first_") || pathName.startsWith("third_") ) {
+            if ( pathName.startsWith(FirstDriver.NAME) || pathName.startsWith(FourthDriver.NAME) ) {
             	copyToLocalFile(fs, path, dst);
             }
             if ( pathName.endsWith(".idn") || pathName.endsWith(".dat") ) {
@@ -195,7 +196,7 @@ public class tdbloader3 extends Configured implements Tool {
 		for ( FileStatus fileStatus : status ) {
             Path path = fileStatus.getPath();
             String pathName = path.getName();
-            if ( pathName.startsWith("second-alternative_") ) {
+            if ( pathName.startsWith(SecondDriver.NAME) ) {
             	paths.put(pathName, path);
             }
         }
