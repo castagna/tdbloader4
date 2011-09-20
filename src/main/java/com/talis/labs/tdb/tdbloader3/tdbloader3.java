@@ -112,6 +112,7 @@ public class tdbloader3 extends Configured implements Tool {
             dsgDisk.sync(); 
             dsgDisk.close();
 
+            new File(args[1], "nodes.dat").delete() ;
             mergeToLocalFile(fs, new Path(args[1] + "_2"), args[1], configuration);
             copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));
             
@@ -210,6 +211,7 @@ public class tdbloader3 extends Configured implements Tool {
             return false;
         Iterator<Node> graphsMem = dsgMem.listGraphNodes();
         Iterator<Node> graphsDisk = dsgDisk.listGraphNodes();
+        
         Set<Node> seen = new HashSet<Node>();
 
         while (graphsMem.hasNext()) {

@@ -16,6 +16,7 @@
 
 package com.talis.labs.tdb.tdbloader3;
 
+import static com.talis.labs.tdb.tdbloader3.tdbloader3.dump;
 import static com.talis.labs.tdb.tdbloader3.tdbloader3.isomorphic;
 import static com.talis.labs.tdb.tdbloader3.tdbloader3.load;
 
@@ -29,7 +30,7 @@ public class verify {
 
 	public static void main(String[] args) throws Exception {
 		if ( args.length != 2 ) {
-			System.err.printf("Usage: verify [generic options] <input> <input>\n");
+			System.err.printf("Usage: verify <input> <input>\n");
 			ToolRunner.printGenericCommandUsage(System.err);
 			System.exit(1);
 		}
@@ -39,6 +40,10 @@ public class verify {
         DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
         boolean isomorphic = isomorphic ( dsgMem, dsgDisk );
         System.out.println ("> " + isomorphic);
+        
+        if ( !isomorphic ) {
+        	System.out.println( dump ( dsgMem, dsgDisk ) );
+        }
 
 		System.exit(0);
 	}

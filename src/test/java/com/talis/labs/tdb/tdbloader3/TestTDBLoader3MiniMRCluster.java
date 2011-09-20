@@ -9,11 +9,13 @@ import java.util.Collection;
 
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.openjena.atlas.lib.FileOps;
 
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
@@ -28,6 +30,10 @@ public class TestTDBLoader3MiniMRCluster extends AbstractMiniMRClusterTest {
     
     @AfterClass public static void after() {
     	stopCluster() ;
+    }
+    
+    @Before public void setup() {
+    	FileOps.clearDirectory(output) ;
     }
 
     @Parameters

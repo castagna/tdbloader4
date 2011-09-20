@@ -73,7 +73,7 @@ public class NodeTableBuilder {
 		objects.close();		
 	}
 
-	public static void dump (Location location, String indexName) {
+	private static void dump (Location location, String indexName) {
 		System.out.println("--------[ " + indexName + " ]--------");
         FileSet fileset = new FileSet(location, indexName) ;
         RangeIndex rIndex = IndexBuilder.createRangeIndex(fileset, indexName.length()==3?SystemTDB.indexRecordTripleFactory:SystemTDB.indexRecordQuadFactory) ;
@@ -83,7 +83,8 @@ public class NodeTableBuilder {
         }		
 	}
 	
-	public static void dumpObject (Location location) {
+	@SuppressWarnings("unused")
+	private static void dumpObject (Location location) {
 		log.debug("{}", location);
 		String path = location.getDirectoryPath() ;
 		ObjectFile objects = FileFactory.createObjectFileDisk(path + File.separator + "nodes.dat");
@@ -99,14 +100,9 @@ public class NodeTableBuilder {
 	public static void main(String[] args) {
 		Location location = new Location("target/output");
 		
-		dumpObject(location);
-		dumpObject(new Location("target/tdb")) ;
-		
-		
 		fixNodeTable(location);
 		dump(location, "SPO");
 		dump(location, "GSPO");
-		
 		
 		Dataset ds = TDBFactory.createDataset(location);
 		Model model = ds.getDefaultModel();
