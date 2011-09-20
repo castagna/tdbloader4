@@ -1,2 +1,5 @@
+tdbloader3
+Copyright 2010,2011 Talis Systems Ltd.
+
 This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/).
