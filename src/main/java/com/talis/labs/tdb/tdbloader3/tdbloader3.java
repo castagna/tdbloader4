@@ -115,18 +115,18 @@ public class tdbloader3 extends Configured implements Tool {
             mergeToLocalFile(fs, new Path(args[1] + "_2"), args[1], configuration);
             copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));
             
-            if (!copyToLocal) {
-                // TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
-                NodeTableBuilder.fixNodeTable(location);            	
-            }
+            // TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
+            NodeTableBuilder.fixNodeTable(location);            	
         }
         
         if ( verify ) {
             DatasetGraphTDB dsgMem = load(args[0]);
             Location location = new Location(args[1]);
             
-            // TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
-            NodeTableBuilder.fixNodeTable(location);
+            if (!copyToLocal) {
+            	// TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
+            	NodeTableBuilder.fixNodeTable(location);
+            }
 
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
             boolean isomorphic = isomorphic ( dsgMem, dsgDisk );
