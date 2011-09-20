@@ -75,7 +75,7 @@ public class QuadRecordReader extends RecordReader<LongWritable, QuadWritable> {
         FileSplit split = (FileSplit) genericSplit;
         
         // RIOT configuration 
-        profile = Utils.createParserProfile(context.getJobID(), split.getPath());
+        profile = Utils.createParserProfile(context, split.getPath());
         
 //        inputByteCounter = ((MapContext)context).getCounter(FileInputFormat.Counter.BYTES_READ);
         Configuration job = context.getConfiguration();

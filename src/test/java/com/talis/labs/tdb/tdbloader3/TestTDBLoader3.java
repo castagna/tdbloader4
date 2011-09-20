@@ -19,44 +19,41 @@ import com.hp.hpl.jena.tdb.sys.SetupTDB;
 @RunWith(Parameterized.class)
 public class TestTDBLoader3 {
 
+	public static final Object[][] TEST_DATA = new Object[][] {
+        { "src/test/resources/test-01", "target/output"}, 
+        { "src/test/resources/test-02", "target/output" }, 
+        { "src/test/resources/test-03", "target/output" },
+        { "src/test/resources/test-04", "target/output" },
+	};
+	
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-                { "src/test/resources/test-01", "target/output", true }, 
-                { "src/test/resources/test-02", "target/output", true }, 
-                { "src/test/resources/test-03", "target/output", true },
-                { "src/test/resources/test-04", "target/output", true },
-
-                { "src/test/resources/test-01", "target/output", false }, 
-                { "src/test/resources/test-02", "target/output", false }, 
-                { "src/test/resources/test-03", "target/output", false },
-                { "src/test/resources/test-04", "target/output", false },
-
-        });
+        return Arrays.asList(TEST_DATA);
     }
 
     private String input ;
     private String output ;
-    private boolean nquadInputFormat ;
     
-    public TestTDBLoader3 ( String input, String output, boolean nquadInputFormat ) {
+    public TestTDBLoader3 ( String input, String output ) {
         this.input = input ;
         this.output = output ;
-        this.nquadInputFormat = nquadInputFormat ;
     }
     
     @Test public void test() throws Exception { 
-    	run (input, output, nquadInputFormat); 
+    	run (input, output); 
     }
     
-    private void run ( String input, String output, boolean nquadInputFormat ) throws Exception {
+    private void run ( String input, String output ) throws Exception {
         String[] args = new String[] {
         		"-conf", "conf/hadoop-local.xml", 
         		"-D", "overrideOutput=true", 
+        		"-D", "useCompression=true", 
         		"-D", "copyToLocal=true", 
         		"-D", "verify=false", 
-        		"-D", "nquadInputFormat=" + nquadInputFormat, 
-        		input, output};
+        		"-D", "runLocal=true",
+        		input, 
+        		output
+        };
         assertEquals ( 0, ToolRunner.run(new tdbloader3(), args) );
         DatasetGraphTDB dsgMem = tdbloader3.load(input);
         DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(new Location(output)) ;

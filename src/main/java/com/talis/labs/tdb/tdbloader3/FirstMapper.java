@@ -17,141 +17,52 @@
 package com.talis.labs.tdb.tdbloader3;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.openjena.atlas.lib.Sink;
-import org.openjena.riot.Lang;
-import org.openjena.riot.RiotException;
-import org.openjena.riot.lang.LangNQuads;
-import org.openjena.riot.lang.LangRIOT;
-import org.openjena.riot.system.ParserProfile;
-import org.openjena.riot.tokens.Tokenizer;
-import org.openjena.riot.tokens.TokenizerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.talis.labs.tdb.tdbloader3.io.QuadWritable;
 
-public class FirstMapper extends Mapper<LongWritable, Text, Text, Text> {
-
-    private static final Logger log = LoggerFactory.getLogger(FirstMapper.class);
-    private ParserProfile profile;
-    private Lang lang ;
-    
-    public void setup(Context context) throws IOException, InterruptedException {
-        profile = Utils.createParserProfile(context.getJobID(), ((FileSplit) context.getInputSplit()).getPath());
-        String inputFileName = ((FileSplit)context.getInputSplit()).getPath().getName();
-        lang = Lang.guess(inputFileName, Lang.NQUADS);
-        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);
-        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(0);
-    	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(0);
-    }
-    
-    @Override
-    public void map (LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
-        try {
-            SinkToContext sink = new SinkToContext(context);
-            Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(value.toString());
-            LangNQuads parser = new LangNQuads(tokenizer, profile, sink) ;
-            parser.parse();
-        } catch (RiotException e) {
-        	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
-        	if ( log.isDebugEnabled() ) log.debug("RiotParserException: " + e.getMessage() + " at line {} offending line is {}", key, value );
-        }
-    }
-    
-    public static LangRIOT getParser(Context context, ParserProfile profile, Lang lang, String str) {
-        SinkToContext sink = new SinkToContext(context);
-        Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(str);
-        
-        if ( lang == Lang.NQUADS ) {
-        	// TODO:
-        	// return new LangNTriples(tokenizer, profile, sink) ;
-        	return new LangNQuads(tokenizer, profile, sink) ;
-        } else {
-        	return new LangNQuads(tokenizer, profile, sink) ;
-        }
-    }
-
-}
-
-class SinkToContext implements Sink<Quad> {
+public class FirstMapper extends Mapper<LongWritable, QuadWritable, Text, NullWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(FirstMapper.class);
-    
-    private Mapper<LongWritable, Text, Text, Text>.Context context;
+
     private Text st = new Text();
     private Text pt = new Text();
     private Text ot = new Text();
     private Text gt = new Text();
-    private Text ht = new Text();
-    private static byte[] S; 
-    private static byte[] P; 
-    private static byte[] O; 
-    private static byte[] G; 
-
-    static {
-        try {
-            S = new String("|S").getBytes("UTF-8");
-            P = new String("|P").getBytes("UTF-8");
-            O = new String("|O").getBytes("UTF-8");
-            G = new String("|G").getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new TDBLoader3Exception(e);
-        }
-    }
-    
-    public SinkToContext(Mapper<LongWritable, Text, Text, Text>.Context context) {
-        this.context = context;
-    }
+    private NullWritable outputValue = NullWritable.get();
 
     @Override
-    public void send(Quad quad) {
+    public void map (LongWritable key, QuadWritable value, Context context) throws IOException, InterruptedException {
+        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+        Quad quad = value.getQuad();
         String s = Utils.serialize(quad.getSubject());
         String p = Utils.serialize(quad.getPredicate());
         String o = Utils.serialize(quad.getObject());
         String g = null;
         if ( !quad.isDefaultGraphGenerated() ) {
             g = Utils.serialize(quad.getGraph());
-            context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
-        } else {
-            context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);        	
         }
 
-        // TODO: reuse hash from TDB NodeTableNative?
-        MessageDigest digest = null;
         try {
-            digest = MessageDigest.getInstance("MD5");
-            digest.update(s.getBytes("UTF-8"));
-            digest.update(p.getBytes("UTF-8"));
-            digest.update(o.getBytes("UTF-8"));
-            if ( g != null ) digest.update(g.getBytes("UTF-8"));
-            String hash = new String(Hex.encodeHex(digest.digest()));
-            ht.set(hash);
             if ( ( s != null ) && ( p != null ) && ( o != null) ) {
                 st.set(s);
                 pt.set(p);
                 ot.set(o);
                 
-                Text hs = new Text(ht); hs.append(S, 0, S.length);
-                Text hp = new Text(ht); hp.append(P, 0, P.length);
-                Text ho = new Text(ht); ho.append(O, 0, O.length);
-                
-                emit(st, hs);
-                emit(pt, hp);
-                emit(ot, ho);
+                emit(context, st);
+                emit(context, pt);
+                emit(context, ot);
             }
             if ( g != null ) {
                 gt.set(g);
-                Text hg = new Text(ht); hg.append(G, 0, G.length);
-                emit(gt, hg);
+                emit(context, gt);
             }
         } catch (Exception e) {
             throw new TDBLoader3Exception(e);
@@ -160,18 +71,14 @@ class SinkToContext implements Sink<Quad> {
             pt.clear();
             ot.clear();
             gt.clear();
-            ht.clear();
         }
     }
 
-    private void emit ( Text key, Text value ) throws IOException, InterruptedException {
-        context.write(key, value);
+    private void emit ( Context context, Text key ) throws IOException, InterruptedException {
+        context.write(key, outputValue);
         if ( log.isDebugEnabled() ) {
-            log.debug("> ({}, {})", key, value);
+            log.debug("> ({}, {})", key, outputValue);
         }
     }
-    
-    @Override public void flush() {}
-    @Override public void close() {}
-    
+
 }

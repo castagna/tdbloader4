@@ -7,8 +7,9 @@ import com.talis.labs.tdb.tdbloader3.io.TestLongQuadWritable;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
+    TestLongQuadWritable.class, 
     TestTDBLoader3.class,
-    TestLongQuadWritable.class
+    TestTDBLoader3MiniMRCluster.class
 })
 
 public class TS_TDBLoader3 {}

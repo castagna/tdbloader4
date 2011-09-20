@@ -3,7 +3,7 @@ package com.talis.labs.tdb.tdbloader3;
 import java.io.StringWriter;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.openjena.atlas.lib.Hex;
 import org.openjena.riot.ErrorHandlerFactory;
 import org.openjena.riot.lang.LabelToNode;
@@ -35,9 +35,9 @@ public class Utils {
         return out.toString();
     }
 
-    public static ParserProfile createParserProfile(JobID jobId, Path path) {
+    public static ParserProfile createParserProfile(JobContext context, Path path) {
         Prologue prologue = new Prologue(null, IRIResolver.createNoResolve()); 
-        LabelToNode labelMapping = new MapReduceLabelToNode(jobId, path);
+        LabelToNode labelMapping = new MapReduceLabelToNode(context, path);
         return new ParserProfileBase(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
     }
 

@@ -18,49 +18,29 @@ package com.talis.labs.tdb.tdbloader3;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
-
-public class ThirdMapper extends Mapper<NullWritable, LongQuadWritable, LongQuadWritable, NullWritable> {
+public class ThirdMapper extends Mapper<LongWritable, Text, Text, Text> {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdMapper.class);
 
-    private LongQuadWritable outputKey = new LongQuadWritable();
-    private NullWritable outputValue = NullWritable.get();
-    
-    @Override
-	public void map (NullWritable key, LongQuadWritable value, Context context) throws IOException, InterruptedException {
+    private Text outputKey = new Text();
+    private Text outputValue = new Text();
+
+	@Override
+	public void map (LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
-
-		long s = value.get(0);
-        long p = value.get(1);
-        long o = value.get(2);
-        long g = value.get(3);
-
-		if ( g != -1l ) {
-	        emit (context, s, p, o, g, "SPOG");
-			emit (context, p, o, s, g, "POSG");
-			emit (context, o, s, p, g, "OSPG");
-			emit (context, g, s, p, o, "GSPO");
-			emit (context, g, p, o, s, "GPOS");
-			emit (context, g, o, s, p, "GOSP");
-		} else {
-			emit (context, s, p, o, -1l, "SPO");
-			emit (context, p, o, s, -1l, "POS");
-			emit (context, o, s, p, -1l, "OSP");
-		}
-		
-	}
-	
-	private void emit (Context context, long s, long p, long o, long g, String indexName) throws IOException, InterruptedException {
-	    outputKey.clear();
-	    outputKey.set(s, p, o, g, indexName);
-	    context.write(outputKey, outputValue);
-        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);	    
+		String[] values = value.toString().split("\\|");
+		outputKey.set(values[0]);
+		outputValue.set(key + "|" + values[1]);
+		context.write(outputKey, outputValue);
+        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
+        outputKey.clear();
+        outputValue.clear();
 	}
 
 }

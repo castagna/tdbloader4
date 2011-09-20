@@ -20,16 +20,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.openjena.riot.lang.LabelToNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.AnonId;
 
 public class MapReduceLabelToNode extends LabelToNode { 
 
-    public MapReduceLabelToNode(JobID jobId, Path path) {
-        super(new SingleScopePolicy(), new MapReduceAllocator(jobId, path));
+	private static final Logger log = LoggerFactory.getLogger(MapReduceLabelToNode.class);
+	
+    public MapReduceLabelToNode(JobContext context, Path path) {
+        super(new SingleScopePolicy(), new MapReduceAllocator(context, path));
     }
     
     private static class SingleScopePolicy implements ScopePolicy<String, Node, Node> { 
@@ -40,17 +44,21 @@ public class MapReduceLabelToNode extends LabelToNode {
     
     private static class MapReduceAllocator implements Allocator<String, Node> {
         
-        private JobID jobId ;
+        private String runId ;
         private Path path ;
 
-        public MapReduceAllocator (JobID jobId, Path path) {
-            this.jobId = jobId;
+        public MapReduceAllocator (JobContext context, Path path) {
+        	// This is to ensure that blank node allocation policy is constant when subsequent MapReduce jobs need that
+            this.runId = context.getConfiguration().get("runId") ;
             this.path = path;
+        	log.debug("MapReduceAllocator({}, {})", runId, path) ;
         }
 
         @Override 
         public Node create(String label) {
-            return Node.createAnon(new AnonId("mrbnode_" + jobId.hashCode() + "_" + path.hashCode() + "_" + label)) ;
+        	String strLabel = "mrbnode_" + runId.hashCode() + "_" + path.hashCode() + "_" + label;
+        	log.debug ("create({}) = {}", label, strLabel);
+            return Node.createAnon(new AnonId(strLabel)) ;
         }
 
         @Override public void reset() {}

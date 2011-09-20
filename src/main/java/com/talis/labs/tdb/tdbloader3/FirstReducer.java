@@ -16,18 +16,12 @@
 
 package com.talis.labs.tdb.tdbloader3;
 
-import static com.hp.hpl.jena.tdb.lib.NodeLib.setHash;
-
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-
-import org.openjena.atlas.lib.Bytes;
 import org.openjena.atlas.logging.Log;
 import org.openjena.riot.Lang;
 import org.openjena.riot.system.ParserProfile;
@@ -39,86 +33,54 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.tdb.base.file.FileSet;
-import com.hp.hpl.jena.tdb.base.file.Location;
-import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
-import com.hp.hpl.jena.tdb.base.record.Record;
-import com.hp.hpl.jena.tdb.base.record.RecordFactory;
-import com.hp.hpl.jena.tdb.index.Index;
-import com.hp.hpl.jena.tdb.lib.NodeLib;
-import com.hp.hpl.jena.tdb.store.Hash;
-import com.hp.hpl.jena.tdb.sys.Names;
+import com.hp.hpl.jena.rdf.model.AnonId;
+import com.hp.hpl.jena.tdb.nodetable.Nodec;
+import com.hp.hpl.jena.tdb.nodetable.NodecSSE;
 import com.hp.hpl.jena.tdb.sys.SystemTDB;
 
-import com.talis.labs.tdb.setup.BlockMgrBuilder;
-import com.talis.labs.tdb.setup.BlockMgrBuilderStd;
-import com.talis.labs.tdb.setup.IndexBuilder;
-import com.talis.labs.tdb.setup.IndexBuilderStd;
-import com.talis.labs.tdb.setup.ObjectFileBuilder;
-import com.talis.labs.tdb.setup.ObjectFileBuilderStd;
-
-public class FirstReducer extends Reducer<Text, Text, LongWritable, Text> {
+public class FirstReducer extends Reducer<Text, Text, Text, LongWritable> {
 	
     private static final Logger log = LoggerFactory.getLogger(FirstReducer.class);
     
-    private Index nodeHashToId;
-    private ObjectFile objects;
-    private FileSystem fs;
-    private Path outLocal;
-    private Path outRemote;
+    private Nodec nodec = new NodecSSE() ;
+
+	private long sum;
+	private String id;
+	private Text key;
 	
     @Override
     public void setup(Context context) {
-        try {
-            fs = FileSystem.get(context.getConfiguration());
-            outRemote = FileOutputFormat.getWorkOutputPath(context);
-            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
-            fs.startLocalOutput(outRemote, outLocal);
-        } catch (Exception e) {
-            throw new TDBLoader3Exception(e);
-        }
-        Location location = new Location(outLocal.toString());
-        init(location);
-    }
-
-    private void init(Location location) {
-        ObjectFileBuilder objectFileBuilder = new ObjectFileBuilderStd() ;
-        BlockMgrBuilder blockMgrBuilder = new BlockMgrBuilderStd() ;
-        IndexBuilder indexBuilder = new IndexBuilderStd(blockMgrBuilder, blockMgrBuilder) ;
-        RecordFactory recordFactory = new RecordFactory(SystemTDB.LenNodeHash, SystemTDB.SizeOfNodeId) ;
-        nodeHashToId = indexBuilder.buildIndex(new FileSet(location, Names.indexNode2Id), recordFactory) ;
-        objects = objectFileBuilder.buildObjectFile(new FileSet(location, Names.indexId2Node), Names.extNodeData) ;
+    	sum = 0;
+        id = String.valueOf(context.getTaskAttemptID().getTaskID().getId());
+        key = new Text(id);
     }
     
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-		Node node = parse(key.toString());
-        Hash hash = new Hash(nodeHashToId.getRecordFactory().keyLength()) ;
-        setHash(hash, node) ;
-        byte k[] = hash.getBytes() ;        
-        Record r = nodeHashToId.getRecordFactory().create(k) ;
-        long id = NodeLib.encodeStore(node, objects) ;
-        Bytes.setLong(id, r.getValue(), 0) ;
-        nodeHashToId.add(r);
+		String keyStr = key.toString();
+		Node node = parse(keyStr);
+		// this is to ensure that offset between FirstReducer and SecondReducer are the same, even when blank nodes are present
+		if ( node.isBlank() ) { node = Node.createAnon(new AnonId(keyStr)); }
 
-        LongWritable _id = new LongWritable(id);
-
-		for (Text value : values) {
-	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
-			context.write(_id, value);
-	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", _id, value);
-		}
+		ByteBuffer bb = ByteBuffer.allocate(nodec.maxSize(node));
+		int len = nodec.encode(node, bb, null);
+		sum += SystemTDB.SizeOfInt + len; // 4 is the overhead to store the length of the ByteBuffer
+		
+		if ( log.isDebugEnabled() ) log.debug("< {}: ({}, (null))", id, key);
 	}
 
     @Override
     public void cleanup(Context context) throws IOException {
-        if ( nodeHashToId != null ) nodeHashToId.sync();
-        if ( nodeHashToId != null ) nodeHashToId.close();            
-        if ( objects != null ) objects.sync();
-        if ( objects != null ) objects.close();
-        if ( fs != null ) fs.completeLocalOutput(outRemote, outLocal);
+        LongWritable value = new LongWritable(sum);
+        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", key, value);
+        try {
+            context.write(key, value);
+            super.cleanup(context); // is this necessary?
+        } catch (InterruptedException e) {
+            throw new TDBLoader3Exception(e);
+        }
     }
-    
+
     private static Node parse(String string) {
     	ParserProfile profile = RiotLib.profile(Lang.NQUADS, null, null) ;
         Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(string) ;

@@ -16,64 +16,151 @@
 
 package com.talis.labs.tdb.tdbloader3;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
-import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.openjena.atlas.logging.Log;
+import org.openjena.riot.Lang;
+import org.openjena.riot.system.ParserProfile;
+import org.openjena.riot.system.RiotLib;
+import org.openjena.riot.tokens.Token;
+import org.openjena.riot.tokens.Tokenizer;
+import org.openjena.riot.tokens.TokenizerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.AnonId;
+import com.hp.hpl.jena.tdb.base.file.FileSet;
+import com.hp.hpl.jena.tdb.base.file.Location;
+import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
+import com.hp.hpl.jena.tdb.lib.NodeLib;
+import com.hp.hpl.jena.tdb.sys.Names;
+import com.talis.labs.tdb.setup.ObjectFileBuilder;
+import com.talis.labs.tdb.setup.ObjectFileBuilderStd;
 
-public class SecondReducer extends Reducer<Text, Text, NullWritable, LongQuadWritable> {
-
+public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
+	
     private static final Logger log = LoggerFactory.getLogger(SecondReducer.class);
-
-    private NullWritable outputKey = NullWritable.get();
-    private LongQuadWritable outputValue = new LongQuadWritable();
-
-    protected void setup(Context context) throws IOException, InterruptedException {
-        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);
-        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(0);
-    	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(0);
-    };
     
+	private ArrayList<Long> offsets;
+	private long offset = 0L;
+
+    private ObjectFile objects;
+    private FileSystem fs;
+    private Path outLocal;
+    private Path outRemote;
+    
+    @Override
+    public void setup(Context context) {
+        String id = String.valueOf(context.getTaskAttemptID().getTaskID().getId());
+        
+        log.debug("Loading offsets from DistributedCache...");
+        offsets = loadOffsets(context);
+        log.debug("Finished loading offsets from DistributedCache.");
+
+        // this is the offset this reducer needs to add (the sum of all his 'previous' peers) 
+        for (int i = 0; i < Integer.valueOf(id); i++) {
+        	offset += offsets.get(i);
+        }
+        log.debug("Reducer's number {} offset is {}", id, offset);
+
+        try {
+            fs = FileSystem.get(context.getConfiguration());
+            outRemote = FileOutputFormat.getWorkOutputPath(context);
+            log.debug("outRemote is {}", outRemote);
+            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
+            fs.startLocalOutput(outRemote, outLocal);
+        } catch (Exception e) {
+            throw new TDBLoader3Exception(e);
+        }
+        Location location = new Location(outLocal.toString());
+        init(location);
+    }
+
+    private void init(Location location) {
+        ObjectFileBuilder objectFileBuilder = new ObjectFileBuilderStd() ;
+        objects = objectFileBuilder.buildObjectFile(new FileSet(location, Names.indexId2Node), Names.extNodeData) ;
+    }
+
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-		
-		long s = -1l;
-		long p = -1l;
-		long o = -1l;
-		long g = -1l;
-		
-		for (Text value : values) {
+		String keyStr = key.toString();
+		Node node = parse(keyStr);
+		// this is to ensure that offset between FirstReducer and SecondReducer are the same, even when blank nodes are present
+		if ( node.isBlank() ) { node = Node.createAnon(new AnonId(keyStr)); }
+
+		long id = NodeLib.encodeStore(node, objects) ;
+		LongWritable _id = new LongWritable(id + offset);
+
+        for (Text value : values) {
 	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
-			String[] v = value.toString().split("\\|");
-			
-			long id = Long.parseLong(v[0]);
-			if ( v[1].equals("S") ) {
-				if ( s != -1l ) context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(1);
-				s = id; 
-			}
-			if ( v[1].equals("P") ) p = id;
-			if ( v[1].equals("O") ) o = id;
-			if ( v[1].equals("G") ) g = id;
+			context.write(_id, value);
+	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", _id, value);
 		}
-		
-		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
-		    outputValue.set(s, p, o, g);
-	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
-		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
-		    outputValue.set(s, p, o);
-	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);
-		} else {
-	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
-        	if ( log.isWarnEnabled() ) log.warn("WARNING: unexpected values for key {}", key );
-		}
-        context.write(outputKey, outputValue);
-        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
-        outputValue.clear();
 	}
 
+    @Override
+    public void cleanup(Context context) throws IOException {
+    	try {
+			super.cleanup(context);
+		} catch (InterruptedException e) {
+			throw new TDBLoader3Exception(e);
+		}
+        if ( objects != null ) objects.sync();
+        if ( objects != null ) objects.close();
+        if ( fs != null ) fs.completeLocalOutput(outRemote, outLocal);
+    }
+
+    private ArrayList<Long> loadOffsets(Context context) {
+    	ArrayList<Long> offsets = new ArrayList<Long>();
+        Configuration configuration = context.getConfiguration();
+        try {
+			Path[] cachedFiles = DistributedCache.getLocalCacheFiles(configuration);
+			if ( log.isDebugEnabled() ) {
+				log.debug("Files in DistributedCache are:");
+				for ( Path file : cachedFiles ) {
+					log.debug(file.toUri().toString());
+				}
+			}
+			for (Path file : cachedFiles) {
+				if ( "offsets.txt".equals(file.getName()) ) {
+					log.debug("Reading offsets file found in DistributedCache...");
+					BufferedReader in = new BufferedReader(new FileReader(file.toString()));
+					String str;
+					while ((str = in.readLine()) != null) {
+						log.debug ("< {}", str);
+						offsets.add(Long.parseLong(str.split("\t")[1]));
+					}
+					in.close();
+				}
+			}
+		} catch (IOException e) {
+			throw new TDBLoader3Exception(e);
+		}
+		return offsets;
+    }
+    
+    private static Node parse(String string) {
+    	ParserProfile profile = RiotLib.profile(Lang.NQUADS, null, null) ;
+        Tokenizer tokenizer = TokenizerFactory.makeTokenizerString(string) ;
+        if ( ! tokenizer.hasNext() )
+            return null ;
+        Token t = tokenizer.next();
+        Node n = profile.create(null, t) ;
+        if ( tokenizer.hasNext() )
+            Log.warn(RiotLib.class, "String has more than one token in it: "+string) ;
+        return n ;
+    }
+    
 }

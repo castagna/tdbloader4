@@ -19,11 +19,16 @@ package com.talis.labs.tdb.tdbloader3;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
@@ -34,17 +39,17 @@ import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
 public class ThirdDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdDriver.class);
-    
-    public ThirdDriver () {
+
+	public ThirdDriver () {
 		super();
-        if ( log.isDebugEnabled() ) log.debug("constructed with no configuration.");
+	    if ( log.isDebugEnabled() ) log.debug("constructed with no configuration.");
 	}
 
 	public ThirdDriver (Configuration configuration) {
 		super(configuration);
         if ( log.isDebugEnabled() ) log.debug("constructed with configuration.");
 	}
-    
+	
 	@Override
 	public int run(String[] args) throws Exception {
 		if ( args.length != 2 ) {
@@ -53,43 +58,34 @@ public class ThirdDriver extends Configured implements Tool {
 			return -1;
 		}
 		
+		log.debug("input: {}, output: {}", args[0], args[1]);
+		
 		Configuration configuration = getConf();
-        boolean runLocal = configuration.getBoolean("runLocal", true);
-        
+        boolean useCompression = configuration.getBoolean("useCompression", false);
+		
 		Job job = new Job(configuration);
-		job.setJobName("third");
+		job.setJobName("second");
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileInputFormat.setInputPathFilter(job, ExcludeNodeTableFilter.class);
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-		job.setInputFormatClass(SequenceFileInputFormat.class);
-
+		job.setInputFormatClass(SequenceFileInputFormat.class);			
+		
 		job.setMapperClass(ThirdMapper.class);
-		job.setMapOutputKeyClass(LongQuadWritable.class);
-		job.setMapOutputValueClass(NullWritable.class);
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(Text.class);
 
 		job.setReducerClass(ThirdReducer.class);
-		job.setOutputKeyClass(LongQuadWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(NullWritable.class);
+		job.setOutputValueClass(LongQuadWritable.class);
 		
-		// TODO: There must be a bug in the SNAPSHOTs of Hadoop
-		// see: http://markmail.org/thread/n3wqbozf6ow2cib6
-		//
-		// WARN  Exception running child : java.lang.NullPointerException
-		//    at org.apache.hadoop.mapred.TaskLogAppender.flush(TaskLogAppender.java:96)
-		//    at org.apache.hadoop.mapred.TaskLog.syncLogs(TaskLog.java:239)
-		//    at org.apache.hadoop.mapred.Child$4.run(Child.java:225)
-		//    at java.security.AccessController.doPrivileged(Native Method)
-		//    at javax.security.auth.Subject.doAs(Subject.java:396)
-		//    at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1153)
-		//    at org.apache.hadoop.mapred.Child.main(Child.java:217)
-		
-		if ( runLocal ) {
-			job.setNumReduceTasks(1);			
-		} else {
-			job.setPartitionerClass(ThirdCustomPartitioner.class);
-			job.setNumReduceTasks(9);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+		if ( useCompression ) {
+			SequenceFileOutputFormat.setCompressOutput(job, true);
+			SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+			SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
 		}
 
 		return job.waitForCompletion(true) ? 0 : 1;
@@ -101,4 +97,11 @@ public class ThirdDriver extends Configured implements Tool {
 		System.exit(exitCode);
 	}
 
+}
+
+class ExcludeNodeTableFilter implements PathFilter {
+    public boolean accept(Path p) {
+        String name = p.getName();
+        return !name.startsWith("node") && !name.startsWith("first_") && !name.startsWith("second-alternative_");
+    }
 }

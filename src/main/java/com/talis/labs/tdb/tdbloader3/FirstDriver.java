@@ -20,13 +20,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
@@ -37,12 +36,13 @@ import com.talis.labs.tdb.tdbloader3.io.NQuadsInputFormat;
 public class FirstDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FirstDriver.class);
-    private static boolean useNQuadsInputFormat = false;
 	public static final String TDBLOADER3_COUNTER_GROUPNAME = "TDBLoader3 Counters";
 	public static final String TDBLOADER3_COUNTER_MALFORMED = "Malformed";
 	public static final String TDBLOADER3_COUNTER_QUADS = "Quads (including duplicates)";
 	public static final String TDBLOADER3_COUNTER_TRIPLES = "Triples (including duplicates)";
 	public static final String TDBLOADER3_COUNTER_DUPLICATES = "Duplicates (quads or triples)";
+	
+	public static final int DEFAULT_NUM_REDUCERS = 10; 
     
 	public FirstDriver () {
 		super();
@@ -52,14 +52,6 @@ public class FirstDriver extends Configured implements Tool {
 	public FirstDriver (Configuration configuration) {
 		super(configuration);
         if ( log.isDebugEnabled() ) log.debug("constructed with configuration.");
-	}
-	
-	public static void setUseNQuadsInputFormat ( boolean flag ) {
-		useNQuadsInputFormat = flag;
-	}
-	
-	public static boolean getUseNQuadsInputFormat() {
-		return useNQuadsInputFormat;
 	}
 
 	@Override
@@ -82,36 +74,41 @@ public class FirstDriver extends Configured implements Tool {
         configuration.setInt("io.sort.factor", 100);
 
 		Job job = new Job(configuration);
-		job.setJobName("first");
+		job.setJobName("first-alternative");
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-		if ( useNQuadsInputFormat ) {
-	        job.setInputFormatClass(NQuadsInputFormat.class);
-	        job.setMapperClass(FirstMapper2.class);		    
-		} else {
-	        job.setMapperClass(FirstMapper.class);		    
-		}
+        job.setInputFormatClass(NQuadsInputFormat.class);
+        job.setMapperClass(FirstMapper.class);		    
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(Text.class);
+		job.setMapOutputValueClass(NullWritable.class);
 		
 		job.setReducerClass(FirstReducer.class);
-	    job.setOutputKeyClass(LongWritable.class);
-	    job.setOutputValueClass(Text.class);
+	    job.setOutputKeyClass(Text.class);
+	    job.setOutputValueClass(LongWritable.class);
 		
-		// TODO: this is bad, how could we merge node tables?
-		job.setNumReduceTasks(1); 
-		
-		job.setOutputFormatClass(SequenceFileOutputFormat.class);
-		if ( useCompression ) {
-			SequenceFileOutputFormat.setCompressOutput(job, true);
-			SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
-			SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);			
-		}
+	    setReducers(job, configuration);
+
+       	job.setOutputFormatClass(TextOutputFormat.class);
 
 		return job.waitForCompletion(true) ? 0 : 1;
+	}
+	
+	public static void setReducers(Job job, Configuration configuration) {
+        boolean runLocal = configuration.getBoolean("runLocal", true);
+        int num_reducers = configuration.getInt("numReducers", DEFAULT_NUM_REDUCERS);
+
+	    // TODO: should we comment this out and let Hadoop decide the number of reducers?
+        if ( runLocal ) {
+        	log.debug("Setting number of reducers to {}", 1);
+            job.setNumReduceTasks(1);           
+        } else {
+        	// number of reducers must be the same as in FirstDriverAlternative to ensure offsets are correct
+        	log.debug("Setting number of reducers to {}", num_reducers);
+            job.setNumReduceTasks(num_reducers);
+        }
 	}
 	
 	public static void main(String[] args) throws Exception {

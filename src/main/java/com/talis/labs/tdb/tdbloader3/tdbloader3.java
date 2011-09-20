@@ -16,22 +16,35 @@
 
 package com.talis.labs.tdb.tdbloader3;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
@@ -40,11 +53,15 @@ import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.TDBLoader;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
+import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
+import com.talis.labs.tdb.tdbloader3.NodeTableBuilder;
 
 public class tdbloader3 extends Configured implements Tool {
 
+    private static final Logger log = LoggerFactory.getLogger(tdbloader3.class);
+	
 	@Override
 	public int run(String[] args) throws Exception {
 		if ( args.length != 2 ) {
@@ -54,35 +71,40 @@ public class tdbloader3 extends Configured implements Tool {
 		}
 		
 		Configuration configuration = getConf();
-        FileSystem fs = FileSystem.get(configuration);
-
+		configuration.set("runId", String.valueOf(System.currentTimeMillis()));
         boolean overrideOutput = configuration.getBoolean("overrideOutput", false);
         boolean copyToLocal = configuration.getBoolean("copyToLocal", true);
         boolean verify = configuration.getBoolean("verify", false);
-        boolean nquadInputFormat = configuration.getBoolean("nquadInputFormat", false);
         
+        FileSystem fs = FileSystem.get(configuration);
         if ( overrideOutput ) {
             fs.delete(new Path(args[1]), true);
             fs.delete(new Path(args[1] + "_1"), true);
             fs.delete(new Path(args[1] + "_2"), true);
             fs.delete(new Path(args[1] + "_3"), true);
+            fs.delete(new Path(args[1] + "_4"), true);
         }
         
         if ( copyToLocal ) {
-        	fs.mkdirs(new Path(args[1]));
+        	File path = new File(args[1]);
+        	path.mkdirs();
         }
 		
-        if ( nquadInputFormat ) {
-        	FirstDriver.setUseNQuadsInputFormat(true);
-        }
         Tool first = new FirstDriver(configuration);
         first.run(new String[] { args[0], args[1] + "_1" });
+
+        createOffsetsFile(fs, args[1] + "_1", args[1] + "_1");
+        Path offsets = new Path(args[1] + "_1", "offsets.txt");
+        DistributedCache.addCacheFile(offsets.toUri(), configuration);
         
         Tool second = new SecondDriver(configuration);
-        second.run(new String[] { args[1] + "_1", args[1] + "_2" });
-        
+        second.run(new String[] { args[0], args[1] + "_2" });
+
         Tool third = new ThirdDriver(configuration);
         third.run(new String[] { args[1] + "_2", args[1] + "_3" });
+        
+        Tool fourth = new FourthDriver(configuration);
+        fourth.run(new String[] { args[1] + "_3", args[1] + "_4" });
         
         if ( copyToLocal ) {
             Location location = new Location(args[1]);
@@ -90,13 +112,22 @@ public class tdbloader3 extends Configured implements Tool {
             dsgDisk.sync(); 
             dsgDisk.close();
 
-            copyToLocalFile(fs, new Path(args[1] + "_1"), new Path(args[1]));
-            copyToLocalFile(fs, new Path(args[1] + "_3"), new Path(args[1]));            
+            mergeToLocalFile(fs, new Path(args[1] + "_2"), args[1], configuration);
+            copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));
+            
+            if (!copyToLocal) {
+                // TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
+                NodeTableBuilder.fixNodeTable(location);            	
+            }
         }
         
         if ( verify ) {
             DatasetGraphTDB dsgMem = load(args[0]);
             Location location = new Location(args[1]);
+            
+            // TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
+            NodeTableBuilder.fixNodeTable(location);
+
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
             boolean isomorphic = isomorphic ( dsgMem, dsgDisk );
             System.out.println ("> " + isomorphic);
@@ -104,10 +135,37 @@ public class tdbloader3 extends Configured implements Tool {
         
 		return 0;
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		int exitCode = ToolRunner.run(new tdbloader3(), args);
 		System.exit(exitCode);
+	}
+	
+	private void createOffsetsFile(FileSystem fs, String input, String output) throws IOException {
+		log.debug("Creating offsets file...");
+        Map<Long, Long> offsets = new TreeMap<Long, Long>();
+        FileStatus[] status = fs.listStatus(new Path(input));
+        for (FileStatus fileStatus : status) {
+        	Path file = fileStatus.getPath();
+        	if ( file.getName().startsWith("part-r-") ) {
+        		log.debug("Processing: {}", file.getName());
+       			BufferedReader in = new BufferedReader(new InputStreamReader(fs.open(file)));
+       			String line = in.readLine();
+       			String[] tokens = line.split("\\s");
+       			long partition = Long.valueOf(tokens[0]); 
+               	long offset = Long.valueOf(tokens[1]);
+               	log.debug("Partition {} has offset {}", partition, offset);
+               	offsets.put(partition, offset);
+        	}
+		}
+
+        Path outputPath = new Path(output, "offsets.txt");
+        PrintWriter out = new PrintWriter(new OutputStreamWriter( fs.create(outputPath)));
+        for (Long partition : offsets.keySet()) {
+			out.println(partition + "\t" + offsets.get(partition));
+		}
+        out.close();
+        log.debug("Offset file created.");
 	}
 	
 	private void copyToLocalFile ( FileSystem fs, Path src, Path dst ) throws FileNotFoundException, IOException {
@@ -124,6 +182,29 @@ public class tdbloader3 extends Configured implements Tool {
         }
 	}
 
+	private void mergeToLocalFile ( FileSystem fs, Path src, String outPath, Configuration configuration ) throws FileNotFoundException, IOException {
+		FileStatus[] status = fs.listStatus(src);
+		Map<String, Path> paths = new TreeMap<String, Path>();
+		for ( FileStatus fileStatus : status ) {
+            Path path = fileStatus.getPath();
+            String pathName = path.getName();
+            if ( pathName.startsWith("second-alternative_") ) {
+            	paths.put(pathName, path);
+            }
+        }
+
+		File outFile = new File(outPath, Names.indexId2Node + ".dat");
+        OutputStream out = new FileOutputStream(outFile);
+        for (String pathName : paths.keySet()) {
+        	Path path = new Path(src, paths.get(pathName));
+        	log.debug("Concatenating {} into {}...", path.toUri(), outFile.getAbsoluteFile());
+        	InputStream in = fs.open(new Path(path, Names.indexId2Node + ".dat"));
+        	IOUtils.copyBytes(in, out, configuration, false);
+        	in.close();			
+		}
+		out.close();
+	}
+	
     public static boolean isomorphic(DatasetGraphTDB dsgMem, DatasetGraphTDB dsgDisk) {
         if (!dsgMem.getDefaultGraph().isIsomorphicWith(dsgDisk.getDefaultGraph()))
             return false;

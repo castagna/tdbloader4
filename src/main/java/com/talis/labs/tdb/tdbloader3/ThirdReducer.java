@@ -16,101 +16,64 @@
 
 package com.talis.labs.tdb.tdbloader3;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.tdb.base.file.Location;
-import com.hp.hpl.jena.tdb.store.bulkloader2.CmdIndexBuild;
 import com.talis.labs.tdb.tdbloader3.io.LongQuadWritable;
 
-public class ThirdReducer extends Reducer<LongQuadWritable, NullWritable, NullWritable, NullWritable> {
+public class ThirdReducer extends Reducer<Text, Text, NullWritable, LongQuadWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdReducer.class);
 
-	private Map<String, OutputStream> outputs;
-    private FileSystem fs;
-    private Path outLocal;
-    private Path outRemote;
+    private NullWritable outputKey = NullWritable.get();
+    private LongQuadWritable outputValue = new LongQuadWritable();
 
+    protected void setup(Context context) throws IOException, InterruptedException {
+        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);
+        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(0);
+    	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(0);
+    };
+    
 	@Override
-	public void setup(Context context) {
-		outputs = new HashMap<String, OutputStream>();
-		try {
-			fs = FileSystem.get(context.getConfiguration());
-	        outRemote = FileOutputFormat.getWorkOutputPath(context);
-            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
-	        new File(outLocal.toString()).mkdir();
-	        // TODO: does this make sense?
-	        fs.setReplication(outLocal, (short)2);
-	        fs.startLocalOutput(outRemote, outLocal);
-		} catch (Exception e) {
-		    throw new TDBLoader3Exception(e);
-		}
-	}
-
-	@Override
-	public void reduce(LongQuadWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
-        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, values.iterator().next());
-
-		String filename = key.getIndexName();
-		OutputStream out = getOutputStream(filename);
-		if ( out != null ) {
-			out.write(Utils.toHex(key.get(0)));
-			out.write(' ');
-			out.write(Utils.toHex(key.get(1)));
-			out.write(' ');
-			out.write(Utils.toHex(key.get(2)));
-			if ( key.get(3) != -1l ) {
-				out.write(' ');
-				out.write(Utils.toHex(key.get(3)));				
-			}
-			out.write('\n');
-		}
-		context.progress();
+	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		
-        if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
-	}
-	
-	private OutputStream getOutputStream(String filename) throws FileNotFoundException {
-		BufferedOutputStream output = null;
-		if ( !outputs.containsKey(filename) ) {
-			output = new BufferedOutputStream(new FileOutputStream(outLocal.toString() + "/" + filename));
-			outputs.put(filename, output);
+		long s = -1l;
+		long p = -1l;
+		long o = -1l;
+		long g = -1l;
+		
+		for (Text value : values) {
+	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+			String[] v = value.toString().split("\\|");
+			
+			long id = Long.parseLong(v[0]);
+			if ( v[1].equals("S") ) {
+				if ( s != -1l ) context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(1);
+				s = id; 
+			}
+			if ( v[1].equals("P") ) p = id;
+			if ( v[1].equals("O") ) o = id;
+			if ( v[1].equals("G") ) g = id;
 		}
-		return outputs.get(filename);
-	}
-
-	@Override
-	public void cleanup(Context context) throws IOException {
-		for ( String filename : outputs.keySet() ) {
-			outputs.get(filename).close();
+		
+		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
+		    outputValue.set(s, p, o, g);
+	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
+		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
+		    outputValue.set(s, p, o);
+	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);
+		} else {
+	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
+        	if ( log.isWarnEnabled() ) log.warn("WARNING: unexpected values for key {}", key );
 		}
-
-		Location location = new Location(outLocal.toString());
-		for ( String indexName : Utils.indexNames ) {
-		    String indexFilename = location.absolute(indexName);
-		    if ( new File(indexFilename).exists() ) {
-		        CmdIndexBuild.main(location.getDirectoryPath(), indexName, indexFilename);
-	            // To save some disk space
-	            new File (indexFilename).delete();
-		    }
-		}
-
-    	fs.completeLocalOutput(outRemote, outLocal);
+        context.write(outputKey, outputValue);
+        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
+        outputValue.clear();
 	}
 
 }
