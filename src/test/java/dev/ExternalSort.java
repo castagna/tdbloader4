@@ -33,6 +33,8 @@ import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.jena.tdbloader3.TDBLoader3Exception;
+import org.apache.jena.tdbloader3.Utils;
 import org.openjena.atlas.data.SerializationFactory;
 import org.openjena.atlas.data.SortedDataBag;
 import org.openjena.atlas.data.ThresholdPolicyCount;
@@ -40,8 +42,6 @@ import org.openjena.atlas.lib.Closeable;
 import org.openjena.atlas.lib.Sink;
 import org.openjena.atlas.lib.Tuple;
 
-import com.talis.labs.tdb.tdbloader3.TDBLoader3Exception;
-import com.talis.labs.tdb.tdbloader3.Utils;
 
 public class ExternalSort {
 
