@@ -25,9 +25,15 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
+	
     TestLongQuadWritable.class, 
+    
     TestScriptedLocal.class,
-    TestScriptedMiniMRCluster.class
+    TestScriptedMiniMRCluster.class,
+    
+    TestTDBLoader3Local.class,
+    TestTDBLoader3MiniMRCluster.class
+    
 })
 
 public class TS_TDBLoader3 {}
