@@ -28,34 +28,27 @@ import java.util.Iterator;
 
 import org.openjena.atlas.lib.Bytes;
 import org.openjena.atlas.lib.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.base.file.FileFactory;
-import com.hp.hpl.jena.tdb.base.file.FileSet;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
 import com.hp.hpl.jena.tdb.base.record.Record;
 import com.hp.hpl.jena.tdb.base.record.RecordFactory;
 import com.hp.hpl.jena.tdb.index.Index;
-import com.hp.hpl.jena.tdb.index.IndexBuilder;
-import com.hp.hpl.jena.tdb.index.RangeIndex;
 import com.hp.hpl.jena.tdb.lib.NodeLib;
 import com.hp.hpl.jena.tdb.store.Hash;
+import com.hp.hpl.jena.tdb.store.bulkloader2.ProgressLogger;
 import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
-import com.hp.hpl.jena.tdb.sys.SystemTDB;
 
 public class NodeTableBuilder {
 	
-    private static final Logger log = LoggerFactory.getLogger(NodeTableBuilder.class);
-	
 	public static void fixNodeTable(Location location) {
+		fixNodeTable(location, null);
+	}
+
+	public static void fixNodeTable(Location location, ProgressLogger monitor) {
 		String path = location.getDirectoryPath() ;
 		new File(path, "node2id.dat").delete() ;
 		new File(path, "node2id.idn").delete() ;
@@ -75,58 +68,14 @@ public class NodeTableBuilder {
 	        byte k[] = hash.getBytes() ;        
 	        Record record = recordFactory.create(k) ;
 	        Bytes.setLong(id, record.getValue(), 0) ;
-			log.debug(pair + " -> " + Utils.toHex(id) + " -> " + node + " -> " + record);
 			nodeToId.add(record);
+			if ( monitor != null ) monitor.tick();
 		}
 
 		nodeToId.sync();
-		if ( log.isDebugEnabled() ) {
-			Iterator<Record> iterRecord = nodeToId.iterator();
-			while ( iterRecord.hasNext() ) {
-				log.debug(iterRecord.next().toString());
-			}			
-		}
 		nodeToId.close();
 		objects.sync();
 		objects.close();		
 	}
 
-	private static void dump (Location location, String indexName) {
-		System.out.println("--------[ " + indexName + " ]--------");
-        FileSet fileset = new FileSet(location, indexName) ;
-        RangeIndex rIndex = IndexBuilder.createRangeIndex(fileset, indexName.length()==3?SystemTDB.indexRecordTripleFactory:SystemTDB.indexRecordQuadFactory) ;
-        Iterator<Record> iter = rIndex.iterator();
-        while ( iter.hasNext() ) {
-        	log.debug(iter.next().toString());
-        }		
-	}
-	
-	@SuppressWarnings("unused")
-	private static void dumpObject (Location location) {
-		log.debug("{}", location);
-		String path = location.getDirectoryPath() ;
-		ObjectFile objects = FileFactory.createObjectFileDisk(path + File.separator + "nodes.dat");
-		Iterator<Pair<Long,ByteBuffer>> iter = objects.all();
-		while ( iter.hasNext() ) {
-			Pair<Long, ByteBuffer> pair = iter.next();
-			long id = pair.getLeft() ;
-			Node node = NodeLib.fetchDecode(id, objects) ;
-			log.debug("{} : {}", id, node);
-		}
-	}
-	
-	public static void main(String[] args) {
-		Location location = new Location("target/output");
-		
-		fixNodeTable(location);
-		dump(location, "SPO");
-		dump(location, "GSPO");
-		
-		Dataset ds = TDBFactory.createDataset(location);
-		Model model = ds.getDefaultModel();
-		StmtIterator stmtIter = model.listStatements();
-		while ( stmtIter.hasNext() ) {
-			System.out.println(stmtIter.next());
-		}
-	}
 }
