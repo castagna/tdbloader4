@@ -55,10 +55,11 @@ public class nodetablebuilder {
 		if ( ( args.length != 1 ) && ( args.length !=2 ) ) { print_usage(); }
 		if ( ( args.length == 2 ) && (!"--dump".equals(args[0])) ) { print_usage(); }
 
-		ProgressLogger monitor = new ProgressLogger(log, "Data", BulkLoader.DataTickPoint,BulkLoader.superTick) ;
+		ProgressLogger monitor = new ProgressLogger(log, "Data (1/2)", BulkLoader.DataTickPoint,BulkLoader.superTick) ;
+		log.info("Data (1/2)...");
 		Location location = new Location(args.length==1?args[0]:args[1]);
 		monitor.start();
-		NodeTableBuilder.fixNodeTable2(location, monitor);
+		NodeTableBuilder.fixNodeTable2(location, log, monitor);
         long time = monitor.finish() ;
 
         long total = monitor.getTicks() ;

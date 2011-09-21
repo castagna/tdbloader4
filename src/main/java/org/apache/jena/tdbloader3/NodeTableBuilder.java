@@ -43,6 +43,7 @@ import org.openjena.atlas.lib.Bytes;
 import org.openjena.atlas.lib.Closeable;
 import org.openjena.atlas.lib.Pair;
 import org.openjena.atlas.lib.Sink;
+import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.tdb.base.file.FileFactory;
@@ -53,6 +54,7 @@ import com.hp.hpl.jena.tdb.base.record.RecordFactory;
 import com.hp.hpl.jena.tdb.index.Index;
 import com.hp.hpl.jena.tdb.lib.NodeLib;
 import com.hp.hpl.jena.tdb.store.Hash;
+import com.hp.hpl.jena.tdb.store.bulkloader.BulkLoader;
 import com.hp.hpl.jena.tdb.store.bulkloader2.ProgressLogger;
 import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
@@ -94,7 +96,7 @@ public class NodeTableBuilder {
 		objects.close();		
 	}
 	
-	public static void fixNodeTable2(Location location, ProgressLogger monitor) throws IOException {
+	public static void fixNodeTable2(Location location, Logger log, ProgressLogger monitor) throws IOException {
 		String path = location.getDirectoryPath() ;
 		new File(path, "node2id.dat").delete() ;
 		new File(path, "node2id.idn").delete() ;
@@ -120,11 +122,15 @@ public class NodeTableBuilder {
 		objects.sync();
 		objects.close();		
 		
+		ProgressLogger monitor2 = new ProgressLogger(log, "Data (2/2)", BulkLoader.DataTickPoint,BulkLoader.superTick);
+		log.info("Data (2/2)...");
+		monitor2.start();
 		// output
 		PairOutputStream out = new PairOutputStream(new FileOutputStream(new File(path, "node2id.tmp")));
 		Iterator<Pair<byte[],Long>> iter2 = sortedDataBag.iterator();
 		while ( iter2.hasNext() ) {
 			out.send(iter2.next());
+			monitor2.tick();
 		}
 		out.close();
 		sortedDataBag.close();
