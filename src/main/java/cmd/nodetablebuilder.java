@@ -21,6 +21,7 @@ package cmd;
 import static com.hp.hpl.jena.sparql.util.Utils.nowAsString;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
@@ -50,14 +51,14 @@ public class nodetablebuilder {
 
     private static final Logger log = LoggerFactory.getLogger(nodetablebuilder.class);
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		if ( ( args.length != 1 ) && ( args.length !=2 ) ) { print_usage(); }
 		if ( ( args.length == 2 ) && (!"--dump".equals(args[0])) ) { print_usage(); }
 
 		ProgressLogger monitor = new ProgressLogger(log, "Data", BulkLoader.DataTickPoint,BulkLoader.superTick) ;
 		Location location = new Location(args.length==1?args[0]:args[1]);
 		monitor.start();
-		NodeTableBuilder.fixNodeTable(location, monitor);
+		NodeTableBuilder.fixNodeTable2(location, monitor);
         long time = monitor.finish() ;
 
         long total = monitor.getTicks() ;
