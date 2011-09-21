@@ -27,7 +27,6 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,6 +38,8 @@ import org.openjena.atlas.AtlasException;
 import org.openjena.atlas.data.SerializationFactory;
 import org.openjena.atlas.data.SortedDataBag;
 import org.openjena.atlas.data.ThresholdPolicyCount;
+import org.openjena.atlas.iterator.Iter;
+import org.openjena.atlas.iterator.Transform;
 import org.openjena.atlas.lib.Bytes;
 import org.openjena.atlas.lib.Closeable;
 import org.openjena.atlas.lib.Pair;
@@ -46,12 +47,18 @@ import org.openjena.atlas.lib.Sink;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.tdb.base.block.BlockMgr;
+import com.hp.hpl.jena.tdb.base.block.BlockMgrFactory;
 import com.hp.hpl.jena.tdb.base.file.FileFactory;
+import com.hp.hpl.jena.tdb.base.file.FileSet;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
 import com.hp.hpl.jena.tdb.base.record.Record;
 import com.hp.hpl.jena.tdb.base.record.RecordFactory;
 import com.hp.hpl.jena.tdb.index.Index;
+import com.hp.hpl.jena.tdb.index.bplustree.BPlusTree;
+import com.hp.hpl.jena.tdb.index.bplustree.BPlusTreeParams;
+import com.hp.hpl.jena.tdb.index.bplustree.BPlusTreeRewriter;
 import com.hp.hpl.jena.tdb.lib.NodeLib;
 import com.hp.hpl.jena.tdb.store.Hash;
 import com.hp.hpl.jena.tdb.store.bulkloader.BulkLoader;
@@ -60,7 +67,7 @@ import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.tdb.sys.SystemTDB;
 
-public class NodeTableBuilder {
+public class NodeTableRewriter {
 	
 	public static void fixNodeTable(Location location) {
 		fixNodeTable(location, null);
@@ -122,17 +129,30 @@ public class NodeTableBuilder {
 		objects.sync();
 		objects.close();		
 		
-		ProgressLogger monitor2 = new ProgressLogger(log, "Data (2/2)", BulkLoader.DataTickPoint,BulkLoader.superTick);
+        // output
+		final ProgressLogger monitor2 = new ProgressLogger(log, "Data (2/2)", BulkLoader.DataTickPoint,BulkLoader.superTick);
 		log.info("Data (2/2)...");
 		monitor2.start();
-		// output
-		PairOutputStream out = new PairOutputStream(new FileOutputStream(new File(path, "node2id.tmp")));
-		Iterator<Pair<byte[],Long>> iter2 = sortedDataBag.iterator();
-		while ( iter2.hasNext() ) {
-			out.send(iter2.next());
-			monitor2.tick();
-		}
-		out.close();
+
+		final RecordFactory recordFactory = new RecordFactory(LenNodeHash, SizeOfNodeId) ;
+		Transform<Pair<byte[],Long>, Record> transformPair2Record = new Transform<Pair<byte[],Long>, Record>() {
+		    @Override public Record convert(Pair<byte[],Long> pair) {
+		        monitor2.tick();
+		        return recordFactory.create(pair.getLeft(), Bytes.packLong(pair.getRight()));
+		    }
+		};
+
+		int order = BPlusTreeParams.calcOrder(SystemTDB.BlockSize, recordFactory) ;
+		BPlusTreeParams bptParams = new BPlusTreeParams(order, recordFactory) ;
+		int readCacheSize = 10 ;
+		int writeCacheSize = 100 ;
+		FileSet destination = new FileSet(location, Names.indexNode2Id) ;
+		BlockMgr blkMgrNodes = BlockMgrFactory.create(destination, Names.bptExt1, SystemTDB.BlockSize, readCacheSize, writeCacheSize) ;
+		BlockMgr blkMgrRecords = BlockMgrFactory.create(destination, Names.bptExt2, SystemTDB.BlockSize, readCacheSize, writeCacheSize) ;
+		Iterator<Record> iter2 = Iter.iter(sortedDataBag.iterator()).map(transformPair2Record) ;
+	    BPlusTree bpt2 = BPlusTreeRewriter.packIntoBPlusTree(iter2, bptParams, recordFactory, blkMgrNodes, blkMgrRecords) ;
+	    bpt2.sync() ;
+		
 		sortedDataBag.close();
 	}
 	

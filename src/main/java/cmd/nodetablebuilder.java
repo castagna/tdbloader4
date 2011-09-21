@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
-import org.apache.jena.tdbloader3.NodeTableBuilder;
+import org.apache.jena.tdbloader3.NodeTableRewriter;
 import org.openjena.atlas.lib.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +59,7 @@ public class nodetablebuilder {
 		log.info("Data (1/2)...");
 		Location location = new Location(args.length==1?args[0]:args[1]);
 		monitor.start();
-		NodeTableBuilder.fixNodeTable2(location, log, monitor);
+		NodeTableRewriter.fixNodeTable2(location, log, monitor);
         long time = monitor.finish() ;
 
         long total = monitor.getTicks() ;
