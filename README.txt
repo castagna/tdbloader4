@@ -28,10 +28,10 @@ To start up an Hadoop cluster using Apache Whirr:
   export AWS_ACCESS_KEY_ID=...
   export AWS_SECRET_ACCESS_KEY=...
   cd /opt/
-  curl -O http://www.apache.org/dist/incubator/whirr/whirr-0.5.0-incubating/whirr-0.5.0-incubating.tar.gz 
-  tar zxf whirr-0.5.0-incubating.tar.gz
+  curl -O http://www.apache.org/dist/incubator/whirr/whirr-0.6.0-incubating/whirr-0.6.0-incubating.tar.gz
+  tar zxf whirr-0.6.0-incubating.tar.gz
   ssh-keygen -t rsa -P '' -f ~/.ssh/whirr
-  export PATH=$PATH:/opt/whirr-0.5.0-incubating/bin/
+  export PATH=$PATH:/opt/whirr-0.6.0-incubating/bin/
   whirr version
   whirr launch-cluster --config hadoop-ec2.properties --private-key-file ~/.ssh/whirr
   . ~/.whirr/hadoop/hadoop-proxy.sh
