@@ -27,6 +27,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses( {
 	
     TestLongQuadWritable.class, 
+    TestNodeTableRewriter.class,
     
     TestScriptedLocal.class,
     TestScriptedMiniMRCluster.class,

@@ -18,6 +18,8 @@
 
 package cmd;
 
+import static com.hp.hpl.jena.sparql.util.Utils.nowAsString;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -47,7 +49,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.jena.tdbloader3.FirstDriver;
 import org.apache.jena.tdbloader3.FourthDriver;
-import org.apache.jena.tdbloader3.NodeTableBuilder;
+import org.apache.jena.tdbloader3.NodeTableRewriter;
 import org.apache.jena.tdbloader3.SecondDriver;
 import org.apache.jena.tdbloader3.ThirdDriver;
 import org.slf4j.Logger;
@@ -60,6 +62,8 @@ import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.TDBLoader;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
+import com.hp.hpl.jena.tdb.store.bulkloader.BulkLoader;
+import com.hp.hpl.jena.tdb.store.bulkloader2.ProgressLogger;
 import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
@@ -124,7 +128,7 @@ public class tdbloader3 extends Configured implements Tool {
             copyToLocalFile(fs, new Path(args[1] + "_4"), new Path(args[1]));
             
             // TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
-            NodeTableBuilder.fixNodeTable(location);            	
+            fixNodeTable2(location);            	
         }
         
         if ( verify ) {
@@ -133,7 +137,7 @@ public class tdbloader3 extends Configured implements Tool {
             
             if (!copyToLocal) {
             	// TODO: this is a sort of a cheat and it could go away (if it turns out to be too slow)!
-            	NodeTableBuilder.fixNodeTable(location);
+            	fixNodeTable2(location);
             }
 
             DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
@@ -142,6 +146,19 @@ public class tdbloader3 extends Configured implements Tool {
         }
         
 		return 0;
+	}
+	
+	private void fixNodeTable2(Location location) throws IOException {
+	    ProgressLogger monitor = new ProgressLogger(log, "Data (1/2)", BulkLoader.DataTickPoint,BulkLoader.superTick) ;
+	    log.info("Data (1/2)...");
+	    monitor.start();
+	    NodeTableRewriter.fixNodeTable2(location, log, monitor);
+	    long time = monitor.finish() ;
+        long total = monitor.getTicks() ;
+        float elapsedSecs = time/1000F ;
+        float rate = (elapsedSecs!=0) ? total/elapsedSecs : 0 ;
+        String str =  String.format("Total: %,d RDF nodes : %,.2f seconds : %,.2f nodes/sec [%s]", total, elapsedSecs, rate, nowAsString()) ;
+        log.info(str);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -214,7 +231,7 @@ public class tdbloader3 extends Configured implements Tool {
 	}
 	
     public static boolean isomorphic(DatasetGraphTDB dsgMem, DatasetGraphTDB dsgDisk) {
-        if (!dsgMem.getDefaultGraph().isIsomorphicWith(dsgDisk.getDefaultGraph()))
+        if (!dsgMem.getDefaultGraphTDB().isIsomorphicWith(dsgDisk.getDefaultGraphTDB()))
             return false;
         Iterator<Node> graphsMem = dsgMem.listGraphNodes();
         Iterator<Node> graphsDisk = dsgDisk.listGraphNodes();
@@ -223,16 +240,16 @@ public class tdbloader3 extends Configured implements Tool {
 
         while (graphsMem.hasNext()) {
             Node graphNode = graphsMem.next();
-            if (dsgDisk.getGraph(graphNode) == null) return false;
-            if (!dsgMem.getGraph(graphNode).isIsomorphicWith(dsgDisk.getGraph(graphNode))) return false;
+            if (dsgDisk.getGraphTDB(graphNode) == null) return false;
+            if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) return false;
             seen.add(graphNode);
         }
 
         while (graphsDisk.hasNext()) {
             Node graphNode = graphsDisk.next();
             if (!seen.contains(graphNode)) {
-                if (dsgMem.getGraph(graphNode) == null) return false;
-                if (!dsgMem.getGraph(graphNode).isIsomorphicWith(dsgDisk.getGraph(graphNode))) return false;
+                if (dsgMem.getGraphTDB(graphNode) == null) return false;
+                if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) return false;
             }
         }
 
@@ -256,12 +273,12 @@ public class tdbloader3 extends Configured implements Tool {
         StringBuffer sb = new StringBuffer();
         sb.append("\n");
         
-        if (!dsgMem.getDefaultGraph().isIsomorphicWith(dsgDisk.getDefaultGraph())) {
+        if (!dsgMem.getDefaultGraphTDB().isIsomorphicWith(dsgDisk.getDefaultGraphTDB())) {
             sb.append("Default graphs are not isomorphic [FAIL]\n");
             sb.append("    First:\n");
-            dump(sb, dsgMem.getDefaultGraph());
+            dump(sb, dsgMem.getDefaultGraphTDB());
             sb.append("    Second:\n");
-            dump(sb, dsgDisk.getDefaultGraph());
+            dump(sb, dsgDisk.getDefaultGraphTDB());
         } else {
             sb.append("Default graphs are isomorphic [OK]\n");
         }
