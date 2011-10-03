@@ -18,14 +18,13 @@
 
 package org.apache.jena.tdbloader3;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -87,10 +86,10 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
         if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
 	}
 	
-	private OutputStream getOutputStream(String filename) throws FileNotFoundException {
-		BufferedOutputStream output = null;
+	private OutputStream getOutputStream(String filename) throws IOException {
+		OutputStream output = null;
 		if ( !outputs.containsKey(filename) ) {
-			output = new BufferedOutputStream(new FileOutputStream(outLocal.toString() + "/" + filename));
+			output = new GZIPOutputStream(new FileOutputStream(outLocal.toString() + "/" + filename + ".gz"));
 			outputs.put(filename, output);
 		}
 		return outputs.get(filename);
@@ -104,7 +103,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 
 		Location location = new Location(outLocal.toString());
 		for ( String indexName : Utils.indexNames ) {
-		    String indexFilename = location.absolute(indexName);
+		    String indexFilename = location.absolute(indexName, "gz");
 		    if ( new File(indexFilename).exists() ) {
 		        CmdIndexBuild.main(location.getDirectoryPath(), indexName, indexFilename);
 	            // To save some disk space

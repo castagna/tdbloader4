@@ -23,6 +23,8 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
+import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -94,6 +96,11 @@ public class SecondDriver extends Configured implements Tool {
 	    FirstDriver.setReducers(job, configuration);
 		
        	job.setOutputFormatClass(SequenceFileOutputFormat.class);
+		if ( useCompression ) {
+			SequenceFileOutputFormat.setCompressOutput(job, true);
+			SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+			SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
+		}
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

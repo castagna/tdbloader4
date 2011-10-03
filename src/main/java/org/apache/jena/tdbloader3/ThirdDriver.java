@@ -66,6 +66,12 @@ public class ThirdDriver extends Configured implements Tool {
 		
 		Configuration configuration = getConf();
         boolean useCompression = configuration.getBoolean("useCompression", false);
+        
+        if ( useCompression ) {
+            configuration.setBoolean("mapred.compress.map.output", true);
+    	    configuration.set("mapred.output.compression.type", "BLOCK");
+    	    configuration.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
+        }
 		
 		Job job = new Job(configuration);
 		job.setJobName(NAME);
@@ -84,6 +90,8 @@ public class ThirdDriver extends Configured implements Tool {
 		job.setReducerClass(ThirdReducer.class);
 		job.setOutputKeyClass(NullWritable.class);
 		job.setOutputValueClass(LongQuadWritable.class);
+		
+	    FirstDriver.setReducers(job, configuration);
 		
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 		if ( useCompression ) {
