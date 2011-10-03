@@ -88,12 +88,13 @@ public class ThirdDriver extends Configured implements Tool {
 		job.setMapOutputValueClass(Text.class);
 
 		job.setReducerClass(ThirdReducer.class);
-		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(LongQuadWritable.class);
+		job.setOutputKeyClass(LongQuadWritable.class);
+		job.setOutputValueClass(NullWritable.class);
 		
 	    FirstDriver.setReducers(job, configuration);
 		
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+
 		if ( useCompression ) {
 			SequenceFileOutputFormat.setCompressOutput(job, true);
 			SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);

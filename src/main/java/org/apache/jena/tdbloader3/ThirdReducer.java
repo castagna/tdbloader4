@@ -28,12 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ThirdReducer extends Reducer<Text, Text, NullWritable, LongQuadWritable> {
+public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdReducer.class);
 
-    private NullWritable outputKey = NullWritable.get();
-    private LongQuadWritable outputValue = new LongQuadWritable();
+    private final NullWritable outputValue = NullWritable.get();
+    private LongQuadWritable outputKey = new LongQuadWritable();
 
     protected void setup(Context context) throws IOException, InterruptedException {
         context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);
@@ -64,10 +64,10 @@ public class ThirdReducer extends Reducer<Text, Text, NullWritable, LongQuadWrit
 		}
 		
 		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
-		    outputValue.set(s, p, o, g);
+		    outputKey.set(s, p, o, g);
 	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
 		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
-		    outputValue.set(s, p, o);
+		    outputKey.set(s, p, o);
 	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);
 		} else {
 	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
@@ -75,7 +75,7 @@ public class ThirdReducer extends Reducer<Text, Text, NullWritable, LongQuadWrit
 		}
         context.write(outputKey, outputValue);
         if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
-        outputValue.clear();
+        outputKey.clear();
 	}
 
 }

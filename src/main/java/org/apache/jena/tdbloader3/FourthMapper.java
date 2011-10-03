@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class FourthMapper extends Mapper<NullWritable, LongQuadWritable, LongQuadWritable, NullWritable> {
+public class FourthMapper extends Mapper<LongQuadWritable, NullWritable, LongQuadWritable, NullWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(FourthMapper.class);
 
@@ -35,13 +35,13 @@ public class FourthMapper extends Mapper<NullWritable, LongQuadWritable, LongQua
     private NullWritable outputValue = NullWritable.get();
     
     @Override
-	public void map (NullWritable key, LongQuadWritable value, Context context) throws IOException, InterruptedException {
+	public void map (LongQuadWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
 
-		long s = value.get(0);
-        long p = value.get(1);
-        long o = value.get(2);
-        long g = value.get(3);
+		long s = key.get(0);
+        long p = key.get(1);
+        long o = key.get(2);
+        long g = key.get(3);
 
 		if ( g != -1l ) {
 	        emit (context, s, p, o, g, "SPOG");
