@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
@@ -35,6 +37,7 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.jena.tdbloader3.io.LongQuadWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +48,7 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 
 	private static final Logger log = LoggerFactory.getLogger(TotalOrderPartitioner.class);
 
-	@SuppressWarnings("rawtypes") private Node partitions;
+	@SuppressWarnings("rawtypes") private Map<String, Node> partitions = new HashMap<String, Node>(9); // nine indexes!
 	public static final String DEFAULT_PATH = "_partition.lst";
 	public static final String PARTITIONER_PATH = "mapreduce.totalorderpartitioner.path";
 	public static final String MAX_TRIE_DEPTH = "mapreduce.totalorderpartitioner.trie.maxdepth";
@@ -66,18 +69,36 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 	 * defined for this job. The input file must be sorted with the same
 	 * comparator and contain {@link Job#getNumReduceTasks()} - 1 keys.
 	 */
-	@SuppressWarnings("unchecked")
 	// keytype from conf not static
 	public void setConf(Configuration conf) {
 		log.debug("setConf({})", conf);
+		this.conf = conf;
+//		log.debug("setConf->init(GSPO)");
+//		init("GSPO", conf);
+//		log.debug("setConf->init(GPOS)");
+//		init("GPOS", conf);
+		log.debug("setConf->init(GOSP)");
+		init("GOSP", conf);
+		init("SPOG", conf);
+		init("POSG", conf);
+		init("OSPG", conf);
+		init("SPO", conf);
+		init("POS", conf);
+		init("OSP", conf);
+		log.debug("setConf() finished.");
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void init(String indexName, Configuration conf) {
+		log.debug("init({}, {})", indexName, conf);
 		try {
-			this.conf = conf;
 			String parts = getPartitionFile(conf);
-			final Path partFile = new Path(parts);
+			final Path partFile = new Path(parts + "_" + indexName);
 			final FileSystem fs = (DEFAULT_PATH.equals(parts)) ? FileSystem.getLocal(conf) // assume in DistributedCache
 					: partFile.getFileSystem(conf);
 			log.debug("FileSystem is {}", fs);
 			Job job = new Job(conf);
+			@SuppressWarnings("unchecked")
 			Class<K> keyClass = (Class<K>) job.getMapOutputKeyClass();
 			log.debug("Map output key class is {}", keyClass.getSimpleName());
 			K[] splitPoints = readPartitions(fs, partFile, keyClass, conf);
@@ -92,6 +113,8 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 				}
 			}
 			boolean natOrder = conf.getBoolean(NATURAL_ORDER, true);
+			@SuppressWarnings("rawtypes")
+			Node partitions = null;
 			if (natOrder && BinaryComparable.class.isAssignableFrom(keyClass)) {
 				partitions = buildTrie((BinaryComparable[]) splitPoints, 0, splitPoints.length, new byte[0],
 						// Now that blocks of identical splitless trie nodes are
@@ -105,9 +128,10 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 			} else {
 				partitions = new BinarySearchNode(splitPoints, comparator);
 			}
+			this.partitions.put(indexName, partitions);
 		} catch (IOException e) {
 			throw new IllegalArgumentException("Can't read partitions file", e);
-		}
+		}		
 	}
 
 	public Configuration getConf() {
@@ -119,7 +143,10 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 	@SuppressWarnings("unchecked")
 	// is memcmp-able and uses the trie
 	public int getPartition(K key, V value, int numPartitions) {
-		int partition = partitions.findPartition(key);
+		LongQuadWritable quad = (LongQuadWritable)key;
+		String indexName = quad.getIndexName();
+		log.debug("indexName = {}", indexName);
+		int partition = partitions.get(indexName).findPartition(key) + 9 * LongQuadWritable.getIndexOffset(indexName);
 		log.debug("getPartition({}, {}, {}) = {}",
 				new String[] { key.toString(), value.toString(),
 				String.valueOf(numPartitions),

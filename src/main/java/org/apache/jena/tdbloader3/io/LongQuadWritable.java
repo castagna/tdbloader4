@@ -234,4 +234,8 @@ public class LongQuadWritable  extends BinaryComparable implements WritableCompa
 		setIndexName(indexName);
 	}
 
+	public static int getIndexOffset(String indexName) {
+		return indexNameToByte.get(indexName);
+	}
+
 }

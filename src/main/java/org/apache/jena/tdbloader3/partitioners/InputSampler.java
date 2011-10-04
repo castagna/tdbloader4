@@ -84,6 +84,7 @@ public class InputSampler<K, V> {
 		SequenceFile.Writer writer = SequenceFile.createWriter(fs, conf, dst, job.getMapOutputKeyClass(), NullWritable.class);
 		NullWritable nullValue = NullWritable.get();
 		float stepSize = shuffledSamples.length / (float) numPartitions;
+		log.debug("Step size is {}", stepSize);
 		int last = -1;
 		for (int i = 1; i < numPartitions; ++i) {
 			int k = Math.round(stepSize * i);
@@ -94,6 +95,7 @@ public class InputSampler<K, V> {
 			writer.append(shuffledSamples[k], nullValue);
 			last = k;
 		}
+		log.debug("Closing {}", dst);
 		writer.close();
 	}
 	
@@ -103,17 +105,21 @@ public class InputSampler<K, V> {
 		for (K sample : samples) {
 			if ( sample instanceof LongQuadWritable ) {
 				LongQuadWritable q = (LongQuadWritable)sample;
-				LongQuadWritable shuffledQuad = null;
-				if ( indexName.equals("GSPO") ) shuffledQuad = new LongQuadWritable(q.get(3), q.get(0), q.get(1), q.get(2));
-				else if ( indexName.equals("GPOS") ) shuffledQuad = new LongQuadWritable(q.get(3), q.get(1), q.get(2), q.get(0));
-				else if ( indexName.equals("GOSP") ) shuffledQuad = new LongQuadWritable(q.get(3), q.get(2), q.get(0), q.get(1));
-				else if ( indexName.equals("SPOG") ) shuffledQuad = new LongQuadWritable(q.get(0), q.get(1), q.get(2), q.get(3));
-				else if ( indexName.equals("POSG") ) shuffledQuad = new LongQuadWritable(q.get(1), q.get(2), q.get(0), q.get(3));
-				else if ( indexName.equals("OSPG") ) shuffledQuad = new LongQuadWritable(q.get(2), q.get(0), q.get(1), q.get(3));
-				else if ( indexName.equals("SPO") ) shuffledQuad = new LongQuadWritable(q.get(0), q.get(1), q.get(2), -1L);
-				else if ( indexName.equals("POS") ) shuffledQuad = new LongQuadWritable(q.get(1), q.get(2), q.get(0), -1L);
-				else if ( indexName.equals("OSP") ) shuffledQuad = new LongQuadWritable(q.get(2), q.get(0), q.get(1), -1L);
-				shuffledSamples.add((K)shuffledQuad);
+				
+				if ( (( q.get(3) != -1L ) && (indexName.length() == 4)) || (( q.get(3) == -1L ) && (indexName.length() == 3)) ) {
+					LongQuadWritable shuffledQuad = null;
+					if ( indexName.equals("GSPO") ) shuffledQuad = new LongQuadWritable(q.get(3), q.get(0), q.get(1), q.get(2));
+					else if ( indexName.equals("GPOS") ) shuffledQuad = new LongQuadWritable(q.get(3), q.get(1), q.get(2), q.get(0));
+					else if ( indexName.equals("GOSP") ) shuffledQuad = new LongQuadWritable(q.get(3), q.get(2), q.get(0), q.get(1));
+					else if ( indexName.equals("SPOG") ) shuffledQuad = new LongQuadWritable(q.get(0), q.get(1), q.get(2), q.get(3));
+					else if ( indexName.equals("POSG") ) shuffledQuad = new LongQuadWritable(q.get(1), q.get(2), q.get(0), q.get(3));
+					else if ( indexName.equals("OSPG") ) shuffledQuad = new LongQuadWritable(q.get(2), q.get(0), q.get(1), q.get(3));
+					else if ( indexName.equals("SPO") ) shuffledQuad = new LongQuadWritable(q.get(0), q.get(1), q.get(2), -1L);
+					else if ( indexName.equals("POS") ) shuffledQuad = new LongQuadWritable(q.get(1), q.get(2), q.get(0), -1L);
+					else if ( indexName.equals("OSP") ) shuffledQuad = new LongQuadWritable(q.get(2), q.get(0), q.get(1), -1L);
+					shuffledSamples.add((K)shuffledQuad);
+				}
+				
 			}
 		}
 		K[] result = (K[]) shuffledSamples.toArray();
