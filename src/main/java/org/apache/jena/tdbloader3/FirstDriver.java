@@ -94,26 +94,13 @@ public class FirstDriver extends Configured implements Tool {
 	    job.setOutputKeyClass(Text.class);
 	    job.setOutputValueClass(LongWritable.class);
 		
-	    setReducers(job, configuration);
+	    Utils.setReducers(job, configuration, log);
 
        	job.setOutputFormatClass(TextOutputFormat.class);
+       	
+       	if ( log.isDebugEnabled() ) Utils.log(job, log);
 
 		return job.waitForCompletion(true) ? 0 : 1;
-	}
-	
-	public static void setReducers(Job job, Configuration configuration) {
-        boolean runLocal = configuration.getBoolean("runLocal", true);
-        int num_reducers = configuration.getInt("numReducers", DEFAULT_NUM_REDUCERS);
-
-	    // TODO: should we comment this out and let Hadoop decide the number of reducers?
-        if ( runLocal ) {
-        	log.debug("Setting number of reducers to {}", 1);
-            job.setNumReduceTasks(1);           
-        } else {
-        	// number of reducers must be the same as in FirstDriverAlternative to ensure offsets are correct
-        	log.debug("Setting number of reducers to {}", num_reducers);
-            job.setNumReduceTasks(num_reducers);
-        }
 	}
 	
 	public static void main(String[] args) throws Exception {

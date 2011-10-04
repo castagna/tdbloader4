@@ -32,8 +32,8 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
 
     private static final Logger log = LoggerFactory.getLogger(ThirdReducer.class);
 
-    private final NullWritable outputValue = NullWritable.get();
     private LongQuadWritable outputKey = new LongQuadWritable();
+    private final NullWritable outputValue = NullWritable.get();
 
     protected void setup(Context context) throws IOException, InterruptedException {
         context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);

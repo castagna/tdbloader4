@@ -46,12 +46,12 @@ public class ThirdDriver extends Configured implements Tool {
 
 	public ThirdDriver () {
 		super();
-	    if ( log.isDebugEnabled() ) log.debug("constructed with no configuration.");
+	    log.debug("constructed with no configuration.");
 	}
 
 	public ThirdDriver (Configuration configuration) {
 		super(configuration);
-        if ( log.isDebugEnabled() ) log.debug("constructed with configuration.");
+        log.debug("constructed with configuration.");
 	}
 	
 	@Override
@@ -66,7 +66,8 @@ public class ThirdDriver extends Configured implements Tool {
 		
 		Configuration configuration = getConf();
         boolean useCompression = configuration.getBoolean("useCompression", false);
-        
+        log.debug("Compression is {}", useCompression ? "enabled" : "disabled" );
+
         if ( useCompression ) {
             configuration.setBoolean("mapred.compress.map.output", true);
     	    configuration.set("mapred.output.compression.type", "BLOCK");
@@ -91,7 +92,7 @@ public class ThirdDriver extends Configured implements Tool {
 		job.setOutputKeyClass(LongQuadWritable.class);
 		job.setOutputValueClass(NullWritable.class);
 		
-	    FirstDriver.setReducers(job, configuration);
+	    Utils.setReducers(job, configuration, log);
 		
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
@@ -101,6 +102,8 @@ public class ThirdDriver extends Configured implements Tool {
 			SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
 		}
 
+		if ( log.isDebugEnabled() ) Utils.log(job, log);
+		
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 	

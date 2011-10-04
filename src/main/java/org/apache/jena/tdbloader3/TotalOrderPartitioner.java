@@ -37,6 +37,9 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Partitioner effecting a total order by reading split points from
@@ -47,6 +50,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class TotalOrderPartitioner<K extends WritableComparable<?>,V>
     extends Partitioner<K,V> implements Configurable {
 
+    private static final Logger log = LoggerFactory.getLogger(TotalOrderPartitioner.class);
+	
   private Node partitions;
   public static final String DEFAULT_PATH = "_partition.lst";
   public static final String PARTITIONER_PATH = 
@@ -120,7 +125,9 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>,V>
   // by construction, we know if our keytype
   @SuppressWarnings("unchecked") // is memcmp-able and uses the trie
   public int getPartition(K key, V value, int numPartitions) {
-    return partitions.findPartition(key);
+	  int partition = partitions.findPartition(key);
+	  log.debug("getPartition({}, {}, {}) = {}", new String[] {key.toString(), value.toString(), String.valueOf(numPartitions), String.valueOf(partition)}) ;
+	  return partition;
   }
 
   /**

@@ -20,6 +20,7 @@ package org.apache.jena.tdbloader3;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -41,12 +42,12 @@ public class FourthDriver extends Configured implements Tool {
     
     public FourthDriver () {
 		super();
-        if ( log.isDebugEnabled() ) log.debug("constructed with no configuration.");
+        log.debug("constructed with no configuration.");
 	}
 
 	public FourthDriver (Configuration configuration) {
 		super(configuration);
-        if ( log.isDebugEnabled() ) log.debug("constructed with configuration.");
+        log.debug("constructed with configuration.");
 	}
     
 	@Override
@@ -59,6 +60,12 @@ public class FourthDriver extends Configured implements Tool {
 		
 		Configuration configuration = getConf();
         boolean runLocal = configuration.getBoolean("runLocal", true);
+        int num_reducers = configuration.getInt("numReducers", FirstDriver.DEFAULT_NUM_REDUCERS);
+
+        FileSystem fs = FileSystem.get(configuration);
+        TotalOrderPartitioner.setPartitionFile(configuration, new Path(args[0], "_partitions").makeQualified(fs));
+        // InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.RandomSampler<LongQuadWritable, NullWritable>(0.1, 10000, 10);
+        InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.SplitSampler<LongQuadWritable, NullWritable>(10000);
         
 		Job job = new Job(configuration);
 		job.setJobName(NAME);
@@ -67,6 +74,13 @@ public class FourthDriver extends Configured implements Tool {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
+        log.debug("Running input sampler...");
+        InputSampler.writePartitionFile(job, sampler);
+        
+//        fs.copyToLocalFile(new Path(args[0]), new Path(args[1])) ;
+        
+        log.debug("Input sampler finished.");
+		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 
 		job.setMapperClass(FourthMapper.class);
@@ -77,24 +91,17 @@ public class FourthDriver extends Configured implements Tool {
 		job.setOutputKeyClass(LongQuadWritable.class);
 		job.setOutputValueClass(NullWritable.class);
 		
-		// TODO: There must be a bug in the SNAPSHOTs of Hadoop
-		// see: http://markmail.org/thread/n3wqbozf6ow2cib6
-		//
-		// WARN  Exception running child : java.lang.NullPointerException
-		//    at org.apache.hadoop.mapred.TaskLogAppender.flush(TaskLogAppender.java:96)
-		//    at org.apache.hadoop.mapred.TaskLog.syncLogs(TaskLog.java:239)
-		//    at org.apache.hadoop.mapred.Child$4.run(Child.java:225)
-		//    at java.security.AccessController.doPrivileged(Native Method)
-		//    at javax.security.auth.Subject.doAs(Subject.java:396)
-		//    at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1153)
-		//    at org.apache.hadoop.mapred.Child.main(Child.java:217)
-		
 		if ( runLocal ) {
 			job.setNumReduceTasks(1);			
 		} else {
+//			job.setPartitionerClass(TotalOrderPartitioner.class);
+//			job.setNumReduceTasks(9 * num_reducers);
+			
 			job.setPartitionerClass(FourthCustomPartitioner.class);
 			job.setNumReduceTasks(9);
 		}
+
+       	if ( log.isDebugEnabled() ) Utils.log(job, log);
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

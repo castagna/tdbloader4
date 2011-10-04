@@ -93,7 +93,7 @@ public class SecondDriver extends Configured implements Tool {
 	    job.setOutputKeyClass(LongWritable.class);
 	    job.setOutputValueClass(Text.class);
 		
-	    FirstDriver.setReducers(job, configuration);
+	    Utils.setReducers(job, configuration, log);
 		
        	job.setOutputFormatClass(SequenceFileOutputFormat.class);
 		if ( useCompression ) {
@@ -101,6 +101,8 @@ public class SecondDriver extends Configured implements Tool {
 			SequenceFileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 			SequenceFileOutputFormat.setOutputCompressionType(job, CompressionType.BLOCK);
 		}
+		
+       	if ( log.isDebugEnabled() ) Utils.log(job, log);
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
