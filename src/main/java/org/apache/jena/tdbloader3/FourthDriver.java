@@ -30,6 +30,10 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.jena.tdbloader3.io.LongQuadWritable;
+import org.apache.jena.tdbloader3.partitioners.InputSampler;
+import org.apache.jena.tdbloader3.partitioners.Sampler;
+import org.apache.jena.tdbloader3.partitioners.SplitSampler;
+import org.apache.jena.tdbloader3.partitioners.TotalOrderPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,10 +66,9 @@ public class FourthDriver extends Configured implements Tool {
         boolean runLocal = configuration.getBoolean("runLocal", true);
         int num_reducers = configuration.getInt("numReducers", FirstDriver.DEFAULT_NUM_REDUCERS);
 
+        // We need to call setPartitionFile before we create a new Job!
         FileSystem fs = FileSystem.get(configuration);
         TotalOrderPartitioner.setPartitionFile(configuration, new Path(args[0], "_partitions").makeQualified(fs));
-        // InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.RandomSampler<LongQuadWritable, NullWritable>(0.1, 10000, 10);
-        InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.SplitSampler<LongQuadWritable, NullWritable>(10000);
         
 		Job job = new Job(configuration);
 		job.setJobName(NAME);
@@ -74,13 +77,6 @@ public class FourthDriver extends Configured implements Tool {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-        log.debug("Running input sampler...");
-        InputSampler.writePartitionFile(job, sampler);
-        
-//        fs.copyToLocalFile(new Path(args[0]), new Path(args[1])) ;
-        
-        log.debug("Input sampler finished.");
-		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 
 		job.setMapperClass(FourthMapper.class);
@@ -90,19 +86,27 @@ public class FourthDriver extends Configured implements Tool {
 		job.setReducerClass(FourthReducer.class);
 		job.setOutputKeyClass(LongQuadWritable.class);
 		job.setOutputValueClass(NullWritable.class);
-		
+
 		if ( runLocal ) {
 			job.setNumReduceTasks(1);			
 		} else {
-//			job.setPartitionerClass(TotalOrderPartitioner.class);
-//			job.setNumReduceTasks(9 * num_reducers);
+			job.setPartitionerClass(TotalOrderPartitioner.class);
+			job.setNumReduceTasks(9 * num_reducers);
 			
-			job.setPartitionerClass(FourthCustomPartitioner.class);
-			job.setNumReduceTasks(9);
+//			job.setPartitionerClass(FourthCustomPartitioner.class);
+//			job.setNumReduceTasks(9);
 		}
 
        	if ( log.isDebugEnabled() ) Utils.log(job, log);
 
+        log.debug("Running input sampler...");
+
+        // InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.RandomSampler<LongQuadWritable, NullWritable>(0.1, 10000, 10);
+        Sampler<LongQuadWritable, NullWritable> sampler = new SplitSampler<LongQuadWritable, NullWritable>(10);
+        InputSampler.writePartitionFile(job, sampler);
+//        fs.copyToLocalFile(new Path(args[0]), new Path(args[1])) ;
+        log.debug("Input sampler finished.");
+       	
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 	
