@@ -1,2 +1,6 @@
 <foo:x> <foo:y> _:bnode1 .
 _:bnode1 <foo:z> "1" .
+<http://example.org/alice/foaf.rdf#me> <http://xmlns.com/foaf/0.1/mbox>                  <mailto:alice@example.org> . 
+<http://example.org/alice/foaf.rdf#me> <http://xmlns.com/foaf/0.1/mbox>                  <mailto:alice@example.org> . 
+<http://example.org/alice/foaf.rdf#me> <http://xmlns.com/foaf/0.1/name>                  "Alice" .
+<http://example.org/alice/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows>                 _:bnode1 .

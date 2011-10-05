@@ -86,6 +86,7 @@ public class TestScriptedMiniMRCluster extends AbstractMiniMRClusterTest {
         		"-D", "verify=false", 
                 "-D", "runLocal=false",
                 "-D", "numReducers=3", 
+                "-D", "numSamples=30", 
                 input, 
                 output
         };

@@ -54,6 +54,7 @@ public class TestTDBLoader3MiniMRCluster extends AbstractMiniMRClusterTest {
                 "-D", "verify=true", 
                 "-D", "runLocal=false",
                 "-D", "numReducers=3", 
+                "-D", "numSamples=40", 
                 input, 
                 output
         };
