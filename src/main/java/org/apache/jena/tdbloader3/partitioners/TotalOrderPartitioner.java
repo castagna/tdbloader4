@@ -55,8 +55,10 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 	public static final String NATURAL_ORDER = "mapreduce.totalorderpartitioner.naturalorder";
 	Configuration conf;
 
+	private int numReduceTasks;
+	
 	public TotalOrderPartitioner() {
-		log.debug("constructor()");
+		if ( log.isDebugEnabled() ) log.debug("constructor()");
 	}
 
 	/**
@@ -71,13 +73,10 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 	 */
 	// keytype from conf not static
 	public void setConf(Configuration conf) {
-		log.debug("setConf({})", conf);
+		if ( log.isDebugEnabled() ) log.debug("setConf({})", conf);
 		this.conf = conf;
-//		log.debug("setConf->init(GSPO)");
-//		init("GSPO", conf);
-//		log.debug("setConf->init(GPOS)");
-//		init("GPOS", conf);
-		log.debug("setConf->init(GOSP)");
+		init("GSPO", conf);
+		init("GPOS", conf);
 		init("GOSP", conf);
 		init("SPOG", conf);
 		init("POSG", conf);
@@ -85,7 +84,7 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 		init("SPO", conf);
 		init("POS", conf);
 		init("OSP", conf);
-		log.debug("setConf() finished.");
+		if ( log.isDebugEnabled() ) log.debug("setConf() finished.");		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -98,17 +97,19 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 					: partFile.getFileSystem(conf);
 			log.debug("FileSystem is {}", fs);
 			Job job = new Job(conf);
-			@SuppressWarnings("unchecked")
 			Class<K> keyClass = (Class<K>) job.getMapOutputKeyClass();
 			log.debug("Map output key class is {}", keyClass.getSimpleName());
 			K[] splitPoints = readPartitions(fs, partFile, keyClass, conf);
-			log.debug("Found {} split points, number of reducers is {}", splitPoints.length, job.getNumReduceTasks());
-			if (splitPoints.length != job.getNumReduceTasks() - 1) {
+			numReduceTasks = job.getNumReduceTasks();
+			log.debug("Found {} split points, number of reducers is {}", splitPoints.length, numReduceTasks);
+			if (splitPoints.length != (numReduceTasks / 9) - 1) {
+				log.debug("Split points are {} which is different from {}", splitPoints.length, (numReduceTasks / 9) - 1);
 				throw new IOException("Wrong number of partitions in keyset");
 			}
 			RawComparator<K> comparator = (RawComparator<K>) job.getSortComparator();
 			for (int i = 0; i < splitPoints.length - 1; ++i) {
 				if (comparator.compare(splitPoints[i], splitPoints[i + 1]) >= 0) {
+					log.debug("Split points are out of order");
 					throw new IOException("Split points are out of order");
 				}
 			}
@@ -128,10 +129,12 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 			} else {
 				partitions = new BinarySearchNode(splitPoints, comparator);
 			}
+			log.debug("Adding {} to {}", partitions, this.partitions);
 			this.partitions.put(indexName, partitions);
 		} catch (IOException e) {
 			throw new IllegalArgumentException("Can't read partitions file", e);
-		}		
+		}
+		log.debug("init({}, {}) finished.", indexName, conf);
 	}
 
 	public Configuration getConf() {
@@ -145,12 +148,18 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 	public int getPartition(K key, V value, int numPartitions) {
 		LongQuadWritable quad = (LongQuadWritable)key;
 		String indexName = quad.getIndexName();
-		log.debug("indexName = {}", indexName);
-		int partition = partitions.get(indexName).findPartition(key) + 9 * LongQuadWritable.getIndexOffset(indexName);
-		log.debug("getPartition({}, {}, {}) = {}",
-				new String[] { key.toString(), value.toString(),
-				String.valueOf(numPartitions),
-				String.valueOf(partition) });
+		int indexOffset = ( numReduceTasks / 9 ) * LongQuadWritable.getIndexOffset(indexName) ;
+		int indexPartition = partitions.get(indexName).findPartition(key);
+		int partition = indexPartition + indexOffset;
+		if ( log.isDebugEnabled() ) {
+			log.debug("indexName = {}", indexName);
+			log.debug("indexOffset = {}", indexOffset);
+			log.debug("indexPartition = {}", indexPartition);
+			log.debug("getPartition({}, {}, {}) = {}",
+					new String[] { key.toString(), value.toString(),
+					String.valueOf(numPartitions),
+					String.valueOf(partition) });
+		}
 		return partition;
 	}
 

@@ -92,7 +92,6 @@ public class FourthDriver extends Configured implements Tool {
 		} else {
 			job.setPartitionerClass(TotalOrderPartitioner.class);
 			job.setNumReduceTasks(9 * num_reducers);
-			
 //			job.setPartitionerClass(FourthCustomPartitioner.class);
 //			job.setNumReduceTasks(9);
 		}
@@ -100,9 +99,8 @@ public class FourthDriver extends Configured implements Tool {
        	if ( log.isDebugEnabled() ) Utils.log(job, log);
 
         log.debug("Running input sampler...");
-
         // InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.RandomSampler<LongQuadWritable, NullWritable>(0.1, 10000, 10);
-        Sampler<LongQuadWritable, NullWritable> sampler = new SplitSampler<LongQuadWritable, NullWritable>(10);
+        Sampler<LongQuadWritable, NullWritable> sampler = new SplitSampler<LongQuadWritable, NullWritable>(30);
         InputSampler.writePartitionFile(job, sampler);
 //        fs.copyToLocalFile(new Path(args[0]), new Path(args[1])) ;
         log.debug("Input sampler finished.");

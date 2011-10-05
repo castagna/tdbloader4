@@ -30,13 +30,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.jena.tdbloader3.io.LongQuadWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.tdb.base.file.Location;
-import com.hp.hpl.jena.tdb.store.bulkloader2.CmdIndexBuild;
 
 public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullWritable, NullWritable> {
 
@@ -46,14 +44,16 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
     private FileSystem fs;
     private Path outLocal;
     private Path outRemote;
+    private TaskAttemptID taskAttemptID;
 
 	@Override
 	public void setup(Context context) {
+		this.taskAttemptID = context.getTaskAttemptID();
 		outputs = new HashMap<String, OutputStream>();
 		try {
 			fs = FileSystem.get(context.getConfiguration());
 	        outRemote = FileOutputFormat.getWorkOutputPath(context);
-            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
+            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + taskAttemptID);
 	        new File(outLocal.toString()).mkdir();
 	        // TODO: does this make sense?
 	        fs.setReplication(outLocal, (short)2);
@@ -89,7 +89,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 	private OutputStream getOutputStream(String filename) throws IOException {
 		OutputStream output = null;
 		if ( !outputs.containsKey(filename) ) {
-			output = new GZIPOutputStream(new FileOutputStream(outLocal.toString() + "/" + filename + ".gz"));
+			output = new GZIPOutputStream(new FileOutputStream(outLocal.toString() + "/" + filename + "_" + taskAttemptID + ".gz"));
 			outputs.put(filename, output);
 		}
 		return outputs.get(filename);
@@ -100,17 +100,6 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 		for ( String filename : outputs.keySet() ) {
 			outputs.get(filename).close();
 		}
-
-		Location location = new Location(outLocal.toString());
-		for ( String indexName : Utils.indexNames ) {
-		    String indexFilename = location.absolute(indexName, "gz");
-		    if ( new File(indexFilename).exists() ) {
-		        CmdIndexBuild.main(location.getDirectoryPath(), indexName, indexFilename);
-	            // To save some disk space
-	            new File (indexFilename).delete();
-		    }
-		}
-
     	fs.completeLocalOutput(outRemote, outLocal);
 	}
 
