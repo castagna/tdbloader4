@@ -98,7 +98,7 @@ public class FirstDriver extends Configured implements Tool {
 	    Utils.setReducers(job, configuration, log);
 
        	job.setOutputFormatClass(TextOutputFormat.class);
-       	
+
        	if ( log.isDebugEnabled() ) Utils.log(job, log);
 
 		return job.waitForCompletion(true) ? 0 : 1;

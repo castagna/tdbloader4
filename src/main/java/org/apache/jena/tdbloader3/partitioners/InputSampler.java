@@ -74,7 +74,8 @@ public class InputSampler<K, V> {
 	private static <K> void writePartitionFile(K[] samples, String indexName, Job job, Configuration conf, int numPartitions) throws IOException {
 		@SuppressWarnings("unchecked")
 		RawComparator<K> comparator = (RawComparator<K>) job.getSortComparator();
-		K[] shuffledSamples = reshuffleSamples(samples, indexName, comparator);
+		K[] shuffledSamples = reshuffleSamples(samples, indexName, comparator, numPartitions);
+		log.debug("Size of permutated samples is {}", shuffledSamples.length);
 		Path dst = new Path(TotalOrderPartitioner.getPartitionFile(conf) + "_" + indexName);
 		log.debug("Writing to {}", dst);
 		FileSystem fs = dst.getFileSystem(conf);
@@ -100,7 +101,7 @@ public class InputSampler<K, V> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static <K> K[] reshuffleSamples(K[] samples, String indexName, RawComparator<K> comparator) {
+	private static <K> K[] reshuffleSamples(K[] samples, String indexName, RawComparator<K> comparator, int numPartitions) {
 		ArrayList<K> shuffledSamples = new ArrayList<K>(samples.length);
 		for (K sample : samples) {
 			if ( sample instanceof LongQuadWritable ) {
@@ -122,8 +123,22 @@ public class InputSampler<K, V> {
 				
 			}
 		}
+
+		// This is to ensure we always have the same amount of split points
+		int size = shuffledSamples.size();
+		if ( size < numPartitions ) {
+			log.debug("Found only {} samples for {} partitions...", shuffledSamples.size(), numPartitions);
+			for (int i = 0; i < numPartitions - size; i++) {
+				long id = 100L * (i + 1);
+				K key = (K)new LongQuadWritable (id, id, id, indexName.length() == 3 ? -1L : id );
+				log.debug("Added fake sample: {}", key);
+				shuffledSamples.add(key);
+			}
+		}
+
 		K[] result = (K[]) shuffledSamples.toArray();
 		Arrays.sort(result, comparator);
+
 		return result;
 	}
 
