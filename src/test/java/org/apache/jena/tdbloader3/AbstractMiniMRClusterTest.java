@@ -18,9 +18,11 @@
 
 package org.apache.jena.tdbloader3;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -36,7 +38,9 @@ public abstract class AbstractMiniMRClusterTest {
     protected static final String config = "target/hadoop-localhost-test.xml" ;
     
     public static void startCluster() throws IOException {
-        Configuration configuration = new Configuration() ;
+    	FileUtils.deleteDirectory(new File("build/test")) ;
+
+    	Configuration configuration = new Configuration() ;
         System.setProperty("hadoop.log.dir", "build/test/logs") ;
         dfsCluster = new MiniDFSCluster(configuration, numNodes, true, null) ;
         mrCluster = new MiniMRCluster(numNodes, dfsCluster.getFileSystem().getUri().toString(), 1) ;
@@ -51,11 +55,13 @@ public abstract class AbstractMiniMRClusterTest {
         fs.copyFromLocalFile(new Path("src/test/resources"), new Path("src/test/resources")) ;
     }
     
-    public static void stopCluster() {
+    public static void stopCluster() throws IOException {
         dfsCluster.shutdown() ;
         dfsCluster = null ;
         mrCluster.shutdown() ;
         mrCluster = null ;
+
+    	FileUtils.deleteDirectory(new File("build")) ;
     }
 
 }

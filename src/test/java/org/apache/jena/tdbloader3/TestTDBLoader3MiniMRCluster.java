@@ -40,7 +40,7 @@ public class TestTDBLoader3MiniMRCluster extends AbstractMiniMRClusterTest {
     	startCluster() ;
     }
     
-    @AfterClass public static void after() {
+    @AfterClass public static void after() throws IOException {
     	stopCluster() ;
     }
 	

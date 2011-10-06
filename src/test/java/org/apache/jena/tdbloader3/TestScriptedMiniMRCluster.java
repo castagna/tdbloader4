@@ -48,7 +48,7 @@ public class TestScriptedMiniMRCluster extends AbstractMiniMRClusterTest {
     	startCluster() ;
     }
     
-    @AfterClass public static void after() {
+    @AfterClass public static void after() throws IOException {
     	stopCluster() ;
     }
     
