@@ -56,10 +56,14 @@ public abstract class AbstractMiniMRClusterTest {
     }
     
     public static void stopCluster() throws IOException {
-        dfsCluster.shutdown() ;
-        dfsCluster = null ;
-        mrCluster.shutdown() ;
-        mrCluster = null ;
+        if ( dfsCluster != null ) {
+        	dfsCluster.shutdown() ;
+            dfsCluster = null ;
+        }
+        if ( mrCluster != null ) {
+            mrCluster.shutdown() ;
+            mrCluster = null ;        	
+        }
     }
 
 }
