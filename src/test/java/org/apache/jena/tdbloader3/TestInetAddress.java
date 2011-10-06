@@ -6,9 +6,11 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
+import org.junit.Test;
+
 public class TestInetAddress {
 
-	public void test() throws UnknownHostException, SocketException {
+	@Test public void test() throws UnknownHostException, SocketException {
 		System.out.println(String.format("LocalHost CanonicalHostName :\t%s", InetAddress.getLocalHost().getCanonicalHostName()));
 		System.out.println(String.format("LocalHost HostName :\t%s", InetAddress.getLocalHost().getHostName()));
 		System.out.println();
