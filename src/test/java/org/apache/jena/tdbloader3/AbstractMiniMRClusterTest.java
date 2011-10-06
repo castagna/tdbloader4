@@ -43,7 +43,6 @@ public abstract class AbstractMiniMRClusterTest {
     	Configuration configuration = new Configuration() ;
         System.setProperty("hadoop.log.dir", "build/test/logs") ;
         dfsCluster = new MiniDFSCluster(configuration, numNodes, true, null) ;
-        dfsCluster.formatDataNodeDirs();
         mrCluster = new MiniMRCluster(numNodes, dfsCluster.getFileSystem().getUri().toString(), 1) ;
         
         // Generate Hadoop configuration
