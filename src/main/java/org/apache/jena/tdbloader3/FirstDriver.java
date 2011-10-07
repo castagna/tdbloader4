@@ -48,7 +48,6 @@ public class FirstDriver extends Configured implements Tool {
 	public static final String TDBLOADER3_COUNTER_DUPLICATES = "Duplicates (quads or triples)";
 	
 	public static final int DEFAULT_NUM_REDUCERS = 10;
-	public static final int DEFAULT_NUM_SAMPLES = 30; 
     
 	public FirstDriver () {
 		super();

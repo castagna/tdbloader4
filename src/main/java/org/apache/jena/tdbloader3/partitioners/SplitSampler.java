@@ -28,7 +28,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.jena.tdbloader3.io.LongQuadWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,13 +84,17 @@ public class SplitSampler<K, V> implements Sampler<K, V> {
 			RecordReader<K, V> reader = inf.createRecordReader(split, samplingContext);
 			reader.initialize(split, samplingContext);
 			while ( reader.nextKeyValue() ) {
-				K key = ReflectionUtils.copy(job.getConfiguration(), reader.getCurrentKey(), null);
-				log.debug("Sampled {}", key);
-				samples.add(key);
-				++records;
-				if ( records >= (i + 1) * samplesPerSplit ) {
-					log.debug("Records is {} and (i + 1) * samplesPerSplit is {}", records, (i + 1) * samplesPerSplit);
-					break;
+				LongQuadWritable currentKey = (LongQuadWritable)reader.getCurrentKey() ;
+				// TODO: why do we need to do that? Why on earth we have -1 in subject, predicate or object position???
+				if ( ( currentKey.get(0) > 0 ) && ( currentKey.get(1) > 0 ) && ( currentKey.get(2) > 0 ) ) {
+					LongQuadWritable key = new LongQuadWritable(currentKey.get(0), currentKey.get(1), currentKey.get(2), currentKey.get(3));
+					log.debug("Sampled {}", key);
+					samples.add((K)key);
+					++records;
+					if ( records >= (i + 1) * samplesPerSplit ) {
+						log.debug("Records is {} and (i + 1) * samplesPerSplit is {}", records, (i + 1) * samplesPerSplit);
+						break;
+					}					
 				}
 			}
 			reader.close();

@@ -41,7 +41,8 @@ public abstract class AbstractMiniMRClusterTest {
     	FileUtils.deleteDirectory(new File("build/test")) ;
 
     	Configuration configuration = new Configuration() ;
-    	configuration.set("dfs.datanode.data.dir.perm", "775") ;
+    	// This is bad since tests will succeed or fail depending on the default file permissions
+    	// configuration.set("dfs.datanode.data.dir.perm", "775") ;
         System.setProperty("hadoop.log.dir", "build/test/logs") ;
         dfsCluster = new MiniDFSCluster(configuration, numNodes, true, null) ;
         mrCluster = new MiniMRCluster(numNodes, dfsCluster.getFileSystem().getUri().toString(), 1) ;

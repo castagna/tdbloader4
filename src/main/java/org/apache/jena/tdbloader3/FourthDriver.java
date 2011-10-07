@@ -43,6 +43,8 @@ public class FourthDriver extends Configured implements Tool {
     private static final Logger log = LoggerFactory.getLogger(FourthDriver.class);
 
     public static final String NAME = "fourth";
+	public static final int DEFAULT_NUM_SAMPLES = 30;
+	public static final int DEFAULT_MAX_SPLITS_SAMPLED = 10; 
     
     public FourthDriver () {
 		super();
@@ -65,7 +67,8 @@ public class FourthDriver extends Configured implements Tool {
 		Configuration configuration = getConf();
         boolean runLocal = configuration.getBoolean("runLocal", true);
         int num_reducers = configuration.getInt("numReducers", FirstDriver.DEFAULT_NUM_REDUCERS);
-        int num_samples = configuration.getInt("numSamples", FirstDriver.DEFAULT_NUM_SAMPLES);
+        int num_samples = configuration.getInt("numSamples", DEFAULT_NUM_SAMPLES);
+        int max_splits_sampled = configuration.getInt("maxSplitsSampled", DEFAULT_MAX_SPLITS_SAMPLED);
 
         // We need to call setPartitionFile before we create a new Job!
         FileSystem fs = FileSystem.get(configuration);
@@ -101,7 +104,7 @@ public class FourthDriver extends Configured implements Tool {
 
         log.debug("Running input sampler...");
         // InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.RandomSampler<LongQuadWritable, NullWritable>(0.1, 10000, 10);
-        Sampler<LongQuadWritable, NullWritable> sampler = new SplitSampler<LongQuadWritable, NullWritable>(num_samples);
+        Sampler<LongQuadWritable, NullWritable> sampler = new SplitSampler<LongQuadWritable, NullWritable>(num_samples, max_splits_sampled);
         InputSampler.writePartitionFile(job, sampler);
 //        fs.copyToLocalFile(new Path(args[0]), new Path(args[1])) ;
         log.debug("Input sampler finished.");

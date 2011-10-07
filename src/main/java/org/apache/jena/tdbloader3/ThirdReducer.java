@@ -66,15 +66,17 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
 		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o, g);
 	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
+	        context.write(outputKey, outputValue);
+	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
 		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o);
 	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);
+	        context.write(outputKey, outputValue);
+	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
 		} else {
 	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
         	if ( log.isWarnEnabled() ) log.warn("WARNING: unexpected values for key {}", key );
 		}
-        context.write(outputKey, outputValue);
-        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
         outputKey.clear();
 	}
 
