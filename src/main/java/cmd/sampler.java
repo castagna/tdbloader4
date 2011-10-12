@@ -126,8 +126,8 @@ public class sampler<K, V> extends Configured implements Tool {
 		return 0;
 	}
 
-	public static void main(String[] args) throws Exception {
-		@SuppressWarnings("rawtypes")
+	@SuppressWarnings("unchecked")
+    public static void main(String[] args) throws Exception {
 		int res = ToolRunner.run(new sampler(new Configuration()), args);
 		System.exit(res);
 	}

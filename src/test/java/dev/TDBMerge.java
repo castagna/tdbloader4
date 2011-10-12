@@ -54,8 +54,8 @@ public class TDBMerge {
 		dsg2.close() ;
 
 		
-		RecordFactory tripleRecordFactory = new RecordFactory(SystemTDB.LenIndexTripleRecord, 0) ;
-		RecordFactory quadRecordFactory = new RecordFactory(SystemTDB.LenIndexQuadRecord, 0) ;
+//		RecordFactory tripleRecordFactory = new RecordFactory(SystemTDB.LenIndexTripleRecord, 0) ;
+//		RecordFactory quadRecordFactory = new RecordFactory(SystemTDB.LenIndexQuadRecord, 0) ;
 		RecordFactory nodeTableRecordFactory = new RecordFactory(SystemTDB.LenNodeHash, SystemTDB.SizeOfNodeId) ;
 
 		Index n2id1 = IndexBuilder.createIndex(new FileSet(location1, Names.indexNode2Id), nodeTableRecordFactory) ;

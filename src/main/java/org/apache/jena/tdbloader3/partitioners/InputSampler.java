@@ -54,7 +54,6 @@ public class InputSampler<K, V> {
 	public static <K, V> void writePartitionFile(Job job, Sampler<K, V> sampler) throws IOException, ClassNotFoundException, InterruptedException {
 		log.debug("writePartitionFile({},{})", job, sampler);
 		Configuration conf = job.getConfiguration();
-		@SuppressWarnings("rawtypes")
 		final InputFormat inf = ReflectionUtils.newInstance(job.getInputFormatClass(), conf);
 		int numPartitions = job.getNumReduceTasks() / 9;
 		log.debug("Number of partitions is {} for each index", numPartitions);

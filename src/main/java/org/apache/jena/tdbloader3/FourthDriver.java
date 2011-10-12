@@ -66,7 +66,7 @@ public class FourthDriver extends Configured implements Tool {
 		
 		Configuration configuration = getConf();
         boolean runLocal = configuration.getBoolean("runLocal", true);
-        int num_reducers = configuration.getInt("numReducers", FirstDriver.DEFAULT_NUM_REDUCERS);
+        int num_reducers = configuration.getInt("numReducers", Utils.DEFAULT_NUM_REDUCERS);
         int num_samples = configuration.getInt("numSamples", DEFAULT_NUM_SAMPLES);
         int max_splits_sampled = configuration.getInt("maxSplitsSampled", DEFAULT_MAX_SPLITS_SAMPLED);
 

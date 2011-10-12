@@ -36,9 +36,9 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
     private final NullWritable outputValue = NullWritable.get();
 
     protected void setup(Context context) throws IOException, InterruptedException {
-        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(0);
-        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(0);
-    	context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(0);
+        context.getCounter(Utils.TDBLOADER3_COUNTER_GROUPNAME, Utils.TDBLOADER3_COUNTER_TRIPLES).increment(0);
+        context.getCounter(Utils.TDBLOADER3_COUNTER_GROUPNAME, Utils.TDBLOADER3_COUNTER_QUADS).increment(0);
+    	context.getCounter(Utils.TDBLOADER3_COUNTER_GROUPNAME, Utils.TDBLOADER3_COUNTER_DUPLICATES).increment(0);
     };
     
 	@Override
@@ -55,7 +55,7 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
 			
 			long id = Long.parseLong(v[0]);
 			if ( v[1].equals("S") ) {
-				if ( s != -1l ) context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_DUPLICATES).increment(1);
+				if ( s != -1l ) context.getCounter(Utils.TDBLOADER3_COUNTER_GROUPNAME, Utils.TDBLOADER3_COUNTER_DUPLICATES).increment(1);
 				s = id; 
 			}
 			if ( v[1].equals("P") ) p = id;
@@ -65,16 +65,16 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
 		
 		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o, g);
-	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_QUADS).increment(1);
+	        context.getCounter(Utils.TDBLOADER3_COUNTER_GROUPNAME, Utils.TDBLOADER3_COUNTER_QUADS).increment(1);
 	        context.write(outputKey, outputValue);
 	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
 		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o);
-	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_TRIPLES).increment(1);
+	        context.getCounter(Utils.TDBLOADER3_COUNTER_GROUPNAME, Utils.TDBLOADER3_COUNTER_TRIPLES).increment(1);
 	        context.write(outputKey, outputValue);
 	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
 		} else {
-	        context.getCounter(FirstDriver.TDBLOADER3_COUNTER_GROUPNAME, FirstDriver.TDBLOADER3_COUNTER_MALFORMED).increment(1);
+	        context.getCounter(Utils.TDBLOADER3_COUNTER_GROUPNAME, Utils.TDBLOADER3_COUNTER_MALFORMED).increment(1);
         	if ( log.isWarnEnabled() ) log.warn("WARNING: unexpected values for key {}", key );
 		}
         outputKey.clear();
