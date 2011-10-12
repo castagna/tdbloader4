@@ -147,8 +147,8 @@ public class NodeTableRewriter {
 		int readCacheSize = 10 ;
 		int writeCacheSize = 100 ;
 		FileSet destination = new FileSet(location, Names.indexNode2Id) ;
-		BlockMgr blkMgrNodes = BlockMgrFactory.create(destination, Names.bptExt1, SystemTDB.BlockSize, readCacheSize, writeCacheSize) ;
-		BlockMgr blkMgrRecords = BlockMgrFactory.create(destination, Names.bptExt2, SystemTDB.BlockSize, readCacheSize, writeCacheSize) ;
+		BlockMgr blkMgrNodes = BlockMgrFactory.create(destination, Names.bptExtTree, SystemTDB.BlockSize, readCacheSize, writeCacheSize) ;
+		BlockMgr blkMgrRecords = BlockMgrFactory.create(destination, Names.bptExtRecords, SystemTDB.BlockSize, readCacheSize, writeCacheSize) ;
 		Iterator<Record> iter2 = Iter.iter(sortedDataBag.iterator()).map(transformPair2Record) ;
 	    BPlusTree bpt2 = BPlusTreeRewriter.packIntoBPlusTree(iter2, bptParams, recordFactory, blkMgrNodes, blkMgrRecords) ;
 	    bpt2.sync() ;

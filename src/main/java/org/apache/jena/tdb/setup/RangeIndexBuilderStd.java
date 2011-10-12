@@ -113,8 +113,8 @@ public class RangeIndexBuilderStd implements RangeIndexBuilder
         
 //        BlockMgr blkMgrNodes = BlockMgrFactory.create(fileset, Names.bptExt1, blockSize, readCacheSize, writeCacheSize) ;
 //        BlockMgr blkMgrRecords = BlockMgrFactory.create(fileset, Names.bptExt2, blockSize, readCacheSize, writeCacheSize) ;
-        BlockMgr blkMgrNodes = blockMgrBuilder1.buildBlockMgr(fileset, Names.bptExt1, blockSize) ;
-        BlockMgr blkMgrRecords = blockMgrBuilder2.buildBlockMgr(fileset, Names.bptExt2, blockSize) ;
+        BlockMgr blkMgrNodes = blockMgrBuilder1.buildBlockMgr(fileset, Names.bptExtTree, blockSize) ;
+        BlockMgr blkMgrRecords = blockMgrBuilder2.buildBlockMgr(fileset, Names.bptExtRecords, blockSize) ;
         
         return BPlusTree.attach(params, blkMgrNodes, blkMgrRecords) ;
     }

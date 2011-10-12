@@ -26,9 +26,9 @@ public class ObjectFileBuilderStd implements ObjectFileBuilder
 {
     public ObjectFile buildObjectFile(FileSet fileSet, String ext)
     {
-        if ( fileSet.isMem() )
-            return FileFactory.createObjectFileMem() ;
         String filename = fileSet.filename(ext) ;
+        if ( fileSet.isMem() )
+            return FileFactory.createObjectFileMem(filename) ;
         return FileFactory.createObjectFileDisk(filename) ;
     }
 }
