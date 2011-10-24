@@ -31,8 +31,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.jena.tdb.setup.ObjectFileBuilder;
-import org.apache.jena.tdb.setup.ObjectFileBuilderStd;
 import org.openjena.atlas.logging.Log;
 import org.openjena.riot.Lang;
 import org.openjena.riot.system.ParserProfile;
@@ -45,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.AnonId;
-import com.hp.hpl.jena.tdb.base.file.FileSet;
+import com.hp.hpl.jena.tdb.base.file.FileFactory;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.base.objectfile.ObjectFile;
 import com.hp.hpl.jena.tdb.lib.NodeLib;
@@ -91,8 +89,7 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
     }
 
     private void init(Location location) {
-        ObjectFileBuilder objectFileBuilder = new ObjectFileBuilderStd() ;
-        objects = objectFileBuilder.buildObjectFile(new FileSet(location, Names.indexId2Node), Names.extNodeData) ;
+        objects = FileFactory.createObjectFileDisk(location.getPath(Names.indexId2Node, Names.extNodeData)) ;
     }
 
 	@Override

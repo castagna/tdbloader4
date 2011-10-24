@@ -48,8 +48,8 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 
 	private static final Logger log = LoggerFactory.getLogger(TotalOrderPartitioner.class);
 
-	@SuppressWarnings("unchecked")
-    private Map<String, Node> partitions = new HashMap<String, Node>(9); // nine indexes!
+    @SuppressWarnings("rawtypes")
+	private Map<String, Node> partitions = new HashMap<String, Node>(9); // nine indexes!
 	public static final String DEFAULT_PATH = "_partition.lst";
 	public static final String PARTITIONER_PATH = "mapreduce.totalorderpartitioner.path";
 	public static final String MAX_TRIE_DEPTH = "mapreduce.totalorderpartitioner.trie.maxdepth";
@@ -115,7 +115,7 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 				}
 			}
 			boolean natOrder = conf.getBoolean(NATURAL_ORDER, true);
-			Node partitions = null;
+			Node<?> partitions = null;
 			if (natOrder && BinaryComparable.class.isAssignableFrom(keyClass)) {
 				partitions = buildTrie((BinaryComparable[]) splitPoints, 0, splitPoints.length, new byte[0],
 						// Now that blocks of identical splitless trie nodes are

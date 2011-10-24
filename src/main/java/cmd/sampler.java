@@ -23,15 +23,15 @@ import java.util.ArrayList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.jena.tdbloader3.io.LongQuadWritable;
 import org.apache.jena.tdbloader3.partitioners.InputSampler;
-import org.apache.jena.tdbloader3.partitioners.IntervalSampler;
-import org.apache.jena.tdbloader3.partitioners.RandomSampler;
 import org.apache.jena.tdbloader3.partitioners.Sampler;
 import org.apache.jena.tdbloader3.partitioners.SplitSampler;
 import org.apache.jena.tdbloader3.partitioners.TotalOrderPartitioner;
@@ -46,12 +46,8 @@ public class sampler<K, V> extends Configured implements Tool {
 		System.out.println("sampler -r <reduces>\n"
 				+ "      [-inFormat <input format class>]\n"
 				+ "      [-keyClass <map input & output key class>]\n"
-				+ "      [-splitRandom <double pcnt> <numSamples> <maxsplits> | "
-				+ "             // Sample from random splits at random (general)\n"
 				+ "       -splitSample <numSamples> <maxsplits> | "
-				+ "             // Sample from first records in splits (random data)\n"
-				+ "       -splitInterval <double pcnt> <maxsplits>]"
-				+ "             // Sample from splits at intervals (sorted data)");
+				+ "             // Sample from first records in splits (random data)");
 		System.out.println("Default sampler: -splitRandom 0.1 10000 10");
 		ToolRunner.printGenericCommandUsage(System.out);
 		return -1;
@@ -82,17 +78,6 @@ public class sampler<K, V> extends Configured implements Tool {
 					int maxSplits = Integer.parseInt(args[++i]);
 					if (0 >= maxSplits) maxSplits = Integer.MAX_VALUE;
 					sampler = new SplitSampler<K, V>(numSamples, maxSplits);
-				} else if ("-splitRandom".equals(args[i])) {
-					double pcnt = Double.parseDouble(args[++i]);
-					int numSamples = Integer.parseInt(args[++i]);
-					int maxSplits = Integer.parseInt(args[++i]);
-					if (0 >= maxSplits) maxSplits = Integer.MAX_VALUE;
-					sampler = new RandomSampler<K, V>(pcnt, numSamples, maxSplits);
-				} else if ("-splitInterval".equals(args[i])) {
-					double pcnt = Double.parseDouble(args[++i]);
-					int maxSplits = Integer.parseInt(args[++i]);
-					if (0 >= maxSplits) maxSplits = Integer.MAX_VALUE;
-					sampler = new IntervalSampler<K, V>(pcnt, maxSplits);
 				} else {
 					otherArgs.add(args[i]);
 				}
@@ -113,7 +98,7 @@ public class sampler<K, V> extends Configured implements Tool {
 			return printUsage();
 		}
 		if (null == sampler) {
-			sampler = new RandomSampler<K, V>(0.1, 10000, 10);
+			sampler = new SplitSampler<K, V>(1000, 10);
 		}
 
 		Path outf = new Path(otherArgs.remove(otherArgs.size() - 1));
@@ -126,9 +111,8 @@ public class sampler<K, V> extends Configured implements Tool {
 		return 0;
 	}
 
-	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-		int res = ToolRunner.run(new sampler(new Configuration()), args);
+		int res = ToolRunner.run(new sampler<LongQuadWritable, NullWritable>(new Configuration()), args);
 		System.exit(res);
 	}
 

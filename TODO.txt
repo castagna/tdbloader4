@@ -7,3 +7,5 @@ TODO
    see: http://markmail.org/thread/sxnq4ini5fb3tivm
 
  - We need to rebuild the B+Tree index for the node table, using records with two keys only (rather than three or four).
+
+ - Add RDFS inference (a la RIOT infer command).
