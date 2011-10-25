@@ -10,12 +10,14 @@ public class Counters {
     private Counter counterDuplicates = null;
     private Counter counterMalformed = null;
     private Counter counterRdfNodes = null;
+    private Counter counterRecords = null;
     
     private long numTriples = 0L;
     private long numQuads = 0L;
     private long numDuplicates = 0L;
     private long numMalformed = 0L;
     private long numRdfNodes = 0L;
+    private long numRecords = 0L;
     private long n = 0L;
 
 	public Counters (TaskInputOutputContext<?,?,?,?> context) {
@@ -24,12 +26,7 @@ public class Counters {
     	counterMalformed = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_MALFORMED);
     	counterDuplicates = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_DUPLICATES);
     	counterRdfNodes = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RDFNODES);
-
-    	counterTriples.increment(0L);
-    	counterQuads.increment(0L);
-    	counterMalformed.increment(0L);
-    	counterDuplicates.increment(0L);
-    	counterRdfNodes.increment(0L);
+    	counterRecords = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RECORDS);
 	}
 
 	public void incrementTriples() {
@@ -62,6 +59,12 @@ public class Counters {
 		report();
 	}
 
+	public void incrementRecords() {
+		numRecords++;
+		n++;
+		report();
+	}
+
 	public void close() {
 		increment();
 	}
@@ -73,17 +76,19 @@ public class Counters {
 	}
 	
 	private void increment() {
-		counterTriples.increment(numTriples);
-		counterQuads.increment(numQuads);
-		counterMalformed.increment(numMalformed);
-		counterDuplicates.increment(numDuplicates);
-		counterRdfNodes.increment(numRdfNodes);
+		if ( numTriples != 0L ) counterTriples.increment(numTriples);
+		if ( numQuads != 0L ) counterQuads.increment(numQuads);
+		if ( numMalformed != 0L ) counterMalformed.increment(numMalformed);
+		if ( numDuplicates != 0L ) counterDuplicates.increment(numDuplicates);
+		if ( numRdfNodes != 0L ) counterRdfNodes.increment(numRdfNodes);
+		if ( numRecords != 0L ) counterRecords.increment(numRecords);
 
 	    numTriples = 0L;
 	    numQuads = 0L;
 	    numDuplicates = 0L;
 	    numMalformed = 0L;
 	    numRdfNodes = 0L;
+	    numRecords = 0L;
 
 		n = 0L;
 	}

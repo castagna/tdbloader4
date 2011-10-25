@@ -45,6 +45,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
     private Path outLocal;
     private Path outRemote;
     private TaskAttemptID taskAttemptID;
+    private Counters counters;
 
 	@Override
 	public void setup(Context context) {
@@ -61,6 +62,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 		} catch (Exception e) {
 		    throw new TDBLoader3Exception(e);
 		}
+		counters = new Counters(context);
 	}
 
 	@Override
@@ -82,7 +84,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 			out.write('\n');
 		}
 		context.progress();
-		
+		counters.incrementRecords();
         if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
 	}
 	
@@ -101,6 +103,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 			outputs.get(filename).close();
 		}
     	fs.completeLocalOutput(outRemote, outLocal);
+    	counters.close();
 	}
 
 }
