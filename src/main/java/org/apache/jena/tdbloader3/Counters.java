@@ -5,6 +5,8 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
 public class Counters {
 
+	private final TaskInputOutputContext<?,?,?,?> context;
+	
     private Counter counterTriples = null;
     private Counter counterQuads = null;
     private Counter counterDuplicates = null;
@@ -21,45 +23,46 @@ public class Counters {
     private long n = 0L;
 
 	public Counters (TaskInputOutputContext<?,?,?,?> context) {
-    	counterTriples = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_TRIPLES);
-        counterQuads = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_QUADS);
-    	counterMalformed = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_MALFORMED);
-    	counterDuplicates = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_DUPLICATES);
-    	counterRdfNodes = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RDFNODES);
-    	counterRecords = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RECORDS);
+		this.context = context;
 	}
 
 	public void incrementTriples() {
+		if ( counterTriples == null ) counterTriples = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_TRIPLES);
 		numTriples++;
 		n++;
 		report();
 	}
 	
 	public void incrementQuads() {
+		if ( counterQuads == null ) counterQuads = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_QUADS);
 		numQuads++;
 		n++;
 		report();
 	}
 	
 	public void incrementDuplicates() {
+		if ( counterDuplicates == null ) counterDuplicates = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_DUPLICATES);
 		numDuplicates++;
 		n++;
 		report();
 	}
 	
 	public void incrementMalformed() {
+		if ( counterMalformed == null ) counterMalformed = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_MALFORMED);
 		numMalformed++;
 		n++;
 		report();
 	}
 
 	public void incrementRdfNodes() {
+		if ( counterRdfNodes == null ) counterRdfNodes = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RDFNODES);
 		numRdfNodes++;
 		n++;
 		report();
 	}
 
 	public void incrementRecords() {
+		if ( counterRecords == null ) counterRecords = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RECORDS);
 		numRecords++;
 		n++;
 		report();
@@ -76,12 +79,12 @@ public class Counters {
 	}
 	
 	private void increment() {
-		if ( numTriples != 0L ) counterTriples.increment(numTriples);
-		if ( numQuads != 0L ) counterQuads.increment(numQuads);
-		if ( numMalformed != 0L ) counterMalformed.increment(numMalformed);
-		if ( numDuplicates != 0L ) counterDuplicates.increment(numDuplicates);
-		if ( numRdfNodes != 0L ) counterRdfNodes.increment(numRdfNodes);
-		if ( numRecords != 0L ) counterRecords.increment(numRecords);
+		if ( ( numTriples != 0L ) && ( counterTriples != null ) ) counterTriples.increment(numTriples);
+		if ( ( numQuads != 0L ) && ( counterQuads != null ) ) counterQuads.increment(numQuads);
+		if ( ( numMalformed != 0L ) && ( counterMalformed != null ) ) counterMalformed.increment(numMalformed);
+		if ( ( numDuplicates != 0L ) && ( counterDuplicates != null ) ) counterDuplicates.increment(numDuplicates);
+		if ( ( numRdfNodes != 0L ) && ( counterRdfNodes != null ) ) counterRdfNodes.increment(numRdfNodes);
+		if ( ( numRecords != 0L ) && ( counterRecords != null ) ) counterRecords.increment(numRecords);
 
 	    numTriples = 0L;
 	    numQuads = 0L;
