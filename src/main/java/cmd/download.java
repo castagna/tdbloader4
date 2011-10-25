@@ -24,10 +24,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.jena.tdbloader3.Constants;
 import org.apache.jena.tdbloader3.FourthDriver;
 import org.apache.jena.tdbloader3.NodeTableRewriter;
 import org.apache.jena.tdbloader3.SecondDriver;
-import org.apache.jena.tdbloader3.Utils;
 import org.openjena.atlas.io.IO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,7 +158,7 @@ public class download extends Configured implements Tool {
         
         // build B+Tree indexes
 		Location location = new Location(outPath);
-		for ( String idxName : Utils.indexNames ) {
+		for ( String idxName : Constants.indexNames ) {
 			log.debug("Creating {} index...", idxName);
 		    String indexFilename = location.absolute(idxName, "gz");
 		    if ( new File(indexFilename).exists() ) {

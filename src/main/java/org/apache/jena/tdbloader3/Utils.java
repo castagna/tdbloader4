@@ -43,7 +43,7 @@ import com.hp.hpl.jena.graph.Node;
 
 public class Utils {
 
-	public static String toString(String[] args) {
+    public static String toString(String[] args) {
 	    StringBuffer sb = new StringBuffer();
 	    sb.append("{");
 	    for ( String arg : args ) sb.append(arg).append(", ");
@@ -65,17 +65,6 @@ public class Utils {
         return new ParserProfileBase(prologue, ErrorHandlerFactory.errorHandlerStd, labelMapping);
     }
 
-	public static String[] indexNames = new String[] {
-	    "SPO",
-	    "POS",
-	    "OSP",
-	    "GSPO",
-	    "GPOS",
-	    "GOSP",
-	    "SPOG",
-	    "POSG",
-	    "OSPG"
-	};
 	public static byte[] toHex(long id) {
 	    byte[] b = new byte[16];
 	    Hex.formatUnsignedLongHex(b, 0, id, 16);
@@ -84,7 +73,7 @@ public class Utils {
 
 	public static void setReducers(Job job, Configuration configuration, Logger log) {
 	    boolean runLocal = configuration.getBoolean("runLocal", true);
-	    int num_reducers = configuration.getInt("numReducers", Utils.DEFAULT_NUM_REDUCERS);
+	    int num_reducers = configuration.getInt("numReducers", Constants.DEFAULT_NUM_REDUCERS);
 	
 	    // TODO: should we comment this out and let Hadoop decide the number of reducers?
 	    if ( runLocal ) {
@@ -115,10 +104,4 @@ public class Utils {
 		log.debug("output: {}", output);
 	}
 
-    public static final String TDBLOADER3_COUNTER_GROUPNAME = "TDBLoader3 Counters";
-    public static final String TDBLOADER3_COUNTER_MALFORMED = "Malformed";
-    public static final String TDBLOADER3_COUNTER_QUADS = "Quads (including duplicates)";
-    public static final String TDBLOADER3_COUNTER_TRIPLES = "Triples (including duplicates)";
-    public static final String TDBLOADER3_COUNTER_DUPLICATES = "Duplicates (quads or triples)";
-    public static final int DEFAULT_NUM_REDUCERS = 10;
 }

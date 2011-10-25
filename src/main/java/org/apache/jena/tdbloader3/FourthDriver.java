@@ -94,10 +94,8 @@ public class FourthDriver extends Configured implements Tool {
        	if ( log.isDebugEnabled() ) Utils.log(job, log);
 
         log.debug("Running input sampler...");
-        // InputSampler.Sampler<LongQuadWritable, NullWritable> sampler = new InputSampler.RandomSampler<LongQuadWritable, NullWritable>(0.1, 10000, 10);
         Sampler<LongQuadWritable, NullWritable> sampler = new SplitSampler<LongQuadWritable, NullWritable>(num_samples, max_splits_sampled);
         InputSampler.writePartitionFile(job, sampler);
-//        fs.copyToLocalFile(new Path(args[0]), new Path(args[1])) ;
         log.debug("Input sampler finished.");
        	
 		return job.waitForCompletion(true) ? 0 : 1;
