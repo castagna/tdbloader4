@@ -32,7 +32,13 @@ public class ThirdMapper extends Mapper<LongWritable, Text, Text, Text> {
 
     private Text outputKey = new Text();
     private Text outputValue = new Text();
+    private Counters counters;
 
+	@Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+		counters = new Counters(context);
+    }
+    
 	@Override
 	public void map (LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
@@ -43,6 +49,12 @@ public class ThirdMapper extends Mapper<LongWritable, Text, Text, Text> {
         if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
         outputKey.clear();
         outputValue.clear();
+        counters.incrementRdfNodes();
+	}
+	
+	@Override
+	protected void cleanup(Context context) throws IOException, InterruptedException {
+		counters.close();
 	}
 
 }

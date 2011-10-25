@@ -26,13 +26,18 @@ import org.apache.jena.tdbloader3.io.LongQuadWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class FourthMapper extends Mapper<LongQuadWritable, NullWritable, LongQuadWritable, NullWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(FourthMapper.class);
 
     private LongQuadWritable outputKey = new LongQuadWritable();
     private NullWritable outputValue = NullWritable.get();
+    private Counters counters;
+    
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+    	counters = new Counters(context);
+    };
     
     @Override
 	public void map (LongQuadWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
@@ -50,12 +55,14 @@ public class FourthMapper extends Mapper<LongQuadWritable, NullWritable, LongQua
 			emit (context, g, s, p, o, "GSPO");
 			emit (context, g, p, o, s, "GPOS");
 			emit (context, g, o, s, p, "GOSP");
+			counters.incrementQuads();
 		} else {
 			emit (context, s, p, o, -1l, "SPO");
 			emit (context, p, o, s, -1l, "POS");
 			emit (context, o, s, p, -1l, "OSP");
+			counters.incrementTriples();
 		}
-		
+
 	}
 	
 	private void emit (Context context, long s, long p, long o, long g, String indexName) throws IOException, InterruptedException {
@@ -64,5 +71,10 @@ public class FourthMapper extends Mapper<LongQuadWritable, NullWritable, LongQua
 	    context.write(outputKey, outputValue);
         if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);	    
 	}
+	
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+    	counters.close();
+    }
 
 }

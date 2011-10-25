@@ -49,12 +49,15 @@ public class FirstReducer extends Reducer<Text, Text, Text, LongWritable> {
 	private long sum;
 	private String id;
 	private Text key;
+
+	private Counters counters;
 	
     @Override
     public void setup(Context context) {
     	sum = 0;
         id = String.valueOf(context.getTaskAttemptID().getTaskID().getId());
         key = new Text(id);
+        counters = new Counters(context);
     }
     
 	@Override
@@ -67,7 +70,9 @@ public class FirstReducer extends Reducer<Text, Text, Text, LongWritable> {
 		ByteBuffer bb = ByteBuffer.allocate(nodec.maxSize(node));
 		int len = nodec.encode(node, bb, null);
 		sum += SystemTDB.SizeOfInt + len; // 4 is the overhead to store the length of the ByteBuffer
-		
+
+		counters.incrementRdfNodes();
+
 		if ( log.isDebugEnabled() ) log.debug("< {}: ({}, (null))", id, key);
 	}
 
@@ -81,6 +86,7 @@ public class FirstReducer extends Reducer<Text, Text, Text, LongWritable> {
         } catch (InterruptedException e) {
             throw new TDBLoader3Exception(e);
         }
+        counters.close();
     }
 
     private static Node parse(String string) {

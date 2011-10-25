@@ -27,35 +27,33 @@ import org.apache.jena.tdbloader3.io.LongQuadWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWritable> {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdReducer.class);
 
     private LongQuadWritable outputKey = new LongQuadWritable();
     private final NullWritable outputValue = NullWritable.get();
+    private Counters counters;
 
+	@Override
     protected void setup(Context context) throws IOException, InterruptedException {
-        context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_TRIPLES).increment(0);
-        context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_QUADS).increment(0);
-    	context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_DUPLICATES).increment(0);
-    };
-    
+		counters = new Counters(context);
+    }
+
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-		
 		long s = -1l;
 		long p = -1l;
 		long o = -1l;
 		long g = -1l;
 		
 		for (Text value : values) {
-	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+	        log.debug("< ({}, {})", key, value);
 			String[] v = value.toString().split("\\|");
 			
 			long id = Long.parseLong(v[0]);
 			if ( v[1].equals("S") ) {
-				if ( s != -1l ) context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_DUPLICATES).increment(1);
+				if ( s != -1l ) counters.incrementDuplicates();
 				s = id; 
 			}
 			if ( v[1].equals("P") ) p = id;
@@ -65,19 +63,24 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
 		
 		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o, g);
-	        context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_QUADS).increment(1);
+		    counters.incrementQuads();
 	        context.write(outputKey, outputValue);
-	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
+	        log.debug("> ({}, {})", outputKey, outputValue);
 		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o);
-	        context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_TRIPLES).increment(1);
+		    counters.incrementTriples();
 	        context.write(outputKey, outputValue);
-	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);
+	        log.debug("> ({}, {})", outputKey, outputValue);
 		} else {
-	        context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_MALFORMED).increment(1);
-        	if ( log.isWarnEnabled() ) log.warn("WARNING: unexpected values for key {}", key );
+			counters.incrementMalformed();
+        	log.warn("WARNING: unexpected values for key {}", key );
 		}
         outputKey.clear();
+	}
+
+	@Override
+	protected void cleanup(Context context) throws IOException, InterruptedException {
+		counters.close();
 	}
 
 }

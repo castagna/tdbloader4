@@ -39,10 +39,16 @@ public class FirstMapper extends Mapper<LongWritable, QuadWritable, Text, NullWr
     private Text ot = new Text();
     private Text gt = new Text();
     private NullWritable outputValue = NullWritable.get();
+    private Counters counters;
 
     @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+    	counters = new Counters(context);
+    }
+    
+    @Override
     public void map (LongWritable key, QuadWritable value, Context context) throws IOException, InterruptedException {
-        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+        log.debug("< ({}, {})", key, value);
         Quad quad = value.getQuad();
         String s = Utils.serialize(quad.getSubject());
         String p = Utils.serialize(quad.getPredicate());
@@ -65,6 +71,9 @@ public class FirstMapper extends Mapper<LongWritable, QuadWritable, Text, NullWr
             if ( g != null ) {
                 gt.set(g);
                 emit(context, gt);
+                counters.incrementQuads();
+            } else {
+            	counters.incrementTriples();
             }
         } catch (Exception e) {
             throw new TDBLoader3Exception(e);
@@ -78,9 +87,12 @@ public class FirstMapper extends Mapper<LongWritable, QuadWritable, Text, NullWr
 
     private void emit ( Context context, Text key ) throws IOException, InterruptedException {
         context.write(key, outputValue);
-        if ( log.isDebugEnabled() ) {
-            log.debug("> ({}, {})", key, outputValue);
-        }
+        log.debug("> ({}, {})", key, outputValue);
+    }
+
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+    	counters.close();
     }
 
 }

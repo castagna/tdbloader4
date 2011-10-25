@@ -72,7 +72,7 @@ public class Utils {
 	}
 
 	public static void setReducers(Job job, Configuration configuration, Logger log) {
-	    boolean runLocal = configuration.getBoolean("runLocal", true);
+	    boolean runLocal = configuration.getBoolean("runLocal", false);
 	    int num_reducers = configuration.getInt("numReducers", Constants.DEFAULT_NUM_REDUCERS);
 	
 	    // TODO: should we comment this out and let Hadoop decide the number of reducers?

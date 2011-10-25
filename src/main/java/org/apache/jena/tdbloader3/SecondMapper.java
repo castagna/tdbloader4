@@ -41,10 +41,12 @@ public class SecondMapper extends Mapper<LongWritable, QuadWritable, Text, Text>
     private Text ot = new Text();
     private Text gt = new Text();
     private Text ht = new Text();
-    private static byte[] S; 
-    private static byte[] P; 
-    private static byte[] O; 
-    private static byte[] G; 
+    private static byte[] S;
+    private static byte[] P;
+    private static byte[] O;
+    private static byte[] G;
+    
+    private Counters counters;
 
     static {
         try {
@@ -56,10 +58,15 @@ public class SecondMapper extends Mapper<LongWritable, QuadWritable, Text, Text>
             throw new TDBLoader3Exception(e);
         }
     }
+
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+    	counters = new Counters(context);
+    };
     
     @Override
     public void map (LongWritable key, QuadWritable value, Context context) throws IOException, InterruptedException {
-        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+        log.debug("< ({}, {})", key, value);
         Quad quad = value.getQuad();
         String s = Utils.serialize(quad.getSubject());
         String p = Utils.serialize(quad.getPredicate());
@@ -96,6 +103,9 @@ public class SecondMapper extends Mapper<LongWritable, QuadWritable, Text, Text>
                 gt.set(g);
                 Text hg = new Text(ht); hg.append(G, 0, G.length);
                 emit(context, gt, hg);
+                counters.incrementQuads();
+            } else {
+            	counters.incrementTriples();
             }
         } catch (Exception e) {
             throw new TDBLoader3Exception(e);
@@ -110,9 +120,12 @@ public class SecondMapper extends Mapper<LongWritable, QuadWritable, Text, Text>
 
     private void emit ( Context context, Text key, Text value ) throws IOException, InterruptedException {
         context.write(key, value);
-        if ( log.isDebugEnabled() ) {
-            log.debug("> ({}, {})", key, value);
-        }
+        log.debug("> ({}, {})", key, value);
+    }
+
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+    	counters.close();
     }
 
 }

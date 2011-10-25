@@ -60,6 +60,7 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
     private FileSystem fs;
     private Path outLocal;
     private Path outRemote;
+    private Counters counters;
     
     @Override
     public void setup(Context context) {
@@ -86,6 +87,8 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
         }
         Location location = new Location(outLocal.toString());
         init(location);
+        
+        counters = new Counters(context);
     }
 
     private void init(Location location) {
@@ -107,6 +110,8 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
 			context.write(_id, value);
 	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", _id, value);
 		}
+
+        counters.incrementRdfNodes();
 	}
 
     @Override
@@ -119,6 +124,7 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
         if ( objects != null ) objects.sync();
         if ( objects != null ) objects.close();
         if ( fs != null ) fs.completeLocalOutput(outRemote, outLocal);
+        counters.close();
     }
 
     private ArrayList<Long> loadOffsets(Context context) {

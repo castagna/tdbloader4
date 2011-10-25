@@ -44,7 +44,7 @@ To copy stuff from your local disk or S3 into your HDFS cluster running on EC2:
 
 Or from a location on S3 (in parallel) use distcp:
 
-  hadoop distcp s3n://$AWS_ACCESS_KEY_ID_LIVE:$AWS_SECRET_ACCESS_KEY_LIVE@{bucketname} hdfs://{hostname}:8020/user/castagna/input
+  hadoop --config ~/.whirr/hadoop distcp s3n://$AWS_ACCESS_KEY_ID_LIVE:$AWS_SECRET_ACCESS_KEY_LIVE@{bucketname} hdfs://{hostname}:8020/user/castagna/input
 
 To launch the tdbloader3 MapReduce jobs:
 
