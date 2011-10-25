@@ -65,8 +65,6 @@ public class FourthDriver extends Configured implements Tool {
 		}
 		
 		Configuration configuration = getConf();
-        boolean runLocal = configuration.getBoolean("runLocal", true);
-        int num_reducers = configuration.getInt("numReducers", Utils.DEFAULT_NUM_REDUCERS);
         int num_samples = configuration.getInt("numSamples", DEFAULT_NUM_SAMPLES);
         int max_splits_sampled = configuration.getInt("maxSplitsSampled", DEFAULT_MAX_SPLITS_SAMPLED);
 
@@ -91,14 +89,7 @@ public class FourthDriver extends Configured implements Tool {
 		job.setOutputKeyClass(LongQuadWritable.class);
 		job.setOutputValueClass(NullWritable.class);
 
-		if ( runLocal ) {
-			job.setNumReduceTasks(1);			
-		} else {
-			job.setPartitionerClass(TotalOrderPartitioner.class);
-			job.setNumReduceTasks(9 * num_reducers);
-//			job.setPartitionerClass(FourthCustomPartitioner.class);
-//			job.setNumReduceTasks(9);
-		}
+	    Utils.setReducers(job, configuration, log);
 
        	if ( log.isDebugEnabled() ) Utils.log(job, log);
 

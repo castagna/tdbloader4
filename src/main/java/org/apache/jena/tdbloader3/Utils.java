@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.jena.tdbloader3.io.MapReduceLabelToNode;
+import org.apache.jena.tdbloader3.partitioners.TotalOrderPartitioner;
 import org.openjena.atlas.lib.Hex;
 import org.openjena.riot.ErrorHandlerFactory;
 import org.openjena.riot.lang.LabelToNode;
@@ -92,7 +93,12 @@ public class Utils {
 	    } else {
 	    	// number of reducers must be the same as in FirstDriverAlternative to ensure offsets are correct
 	    	if (log != null) log.debug("Setting number of reducers to {}", num_reducers);
-	        job.setNumReduceTasks(num_reducers);
+	    	if ( "fourth".equals( job.getJobName() ) ) {
+				job.setPartitionerClass(TotalOrderPartitioner.class);
+				job.setNumReduceTasks(9 * num_reducers);
+	    	} else {
+	    		job.setNumReduceTasks(num_reducers);
+	    	}
 	    }
 	}
 

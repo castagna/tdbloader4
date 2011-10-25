@@ -18,6 +18,7 @@
 
 package org.apache.jena.tdbloader3;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,15 +44,18 @@ public abstract class AbstractMiniMRClusterTest {
     	Configuration configuration = new Configuration() ;
     	// this is to avoid problems with permissions in the ./build directory used by tests
     	configuration.setBoolean("dfs.permissions", false) ;
-    	configuration.set("dfs.mask", "000") ;
         // "dfs.umask=022"
         System.setProperty("hadoop.log.dir", "build/test/logs") ;
         dfsCluster = new MiniDFSCluster(configuration, numNodes, true, null) ;
         mrCluster = new MiniMRCluster(numNodes, dfsCluster.getFileSystem().getUri().toString(), 1) ;
-        
+
         // Generate Hadoop configuration
+        ByteArrayOutputStream baos = new ByteArrayOutputStream() ;
+        mrCluster.createJobConf().writeXml(baos) ;
+        String cfg = baos.toString() ;
+        cfg.replace("<name>dfs.permissions</name><value>true</value>", "<name>dfs.permissions</name><value>false</value>") ;
         FileOutputStream out = new FileOutputStream (config) ;
-        mrCluster.createJobConf().writeXml(out) ;
+        out.write(cfg.getBytes()) ;
         out.close() ;
         
         // Copy testing data onto (H)DFS
