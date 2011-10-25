@@ -80,7 +80,7 @@ public class TestScriptedMiniMRCluster extends AbstractMiniMRClusterTest {
     private void run ( String input, String output ) throws Exception {
         String[] args = new String[] {
                 "-conf", config, 
-                "-D", "dfs.permissions=no", // this is to avoid problems with permissions in the ./build directory used by tests
+                "-D", "dfs.permissions=false", // this is to avoid problems with permissions in the ./build directory used by tests
         		"-D", "overrideOutput=true", 
         		"-D", "useCompression=false", 
         		"-D", "copyToLocal=true", 
