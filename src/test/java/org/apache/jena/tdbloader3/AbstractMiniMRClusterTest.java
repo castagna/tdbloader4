@@ -53,7 +53,7 @@ public abstract class AbstractMiniMRClusterTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream() ;
         mrCluster.createJobConf().writeXml(baos) ;
         String cfg = baos.toString() ;
-        cfg.replace("<name>dfs.permissions</name><value>true</value>", "<name>dfs.permissions</name><value>false</value>") ;
+        cfg = cfg.replace("<name>dfs.permissions</name><value>true</value>", "<name>dfs.permissions</name><value>false</value>") ;
         FileOutputStream out = new FileOutputStream (config) ;
         out.write(cfg.getBytes()) ;
         out.close() ;
