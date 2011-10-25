@@ -43,9 +43,8 @@ public abstract class AbstractMiniMRClusterTest {
     	Configuration configuration = new Configuration() ;
     	// this is to avoid problems with permissions in the ./build directory used by tests
     	configuration.setBoolean("dfs.permissions", false) ;
-        // "-D", "dfs.umask=022",                 
-    	// This is bad since tests will succeed or fail depending on the default file permissions
-    	// configuration.set("dfs.datanode.data.dir.perm", "775") ;
+    	configuration.set("dfs.mask", "000") ;
+        // "dfs.umask=022"
         System.setProperty("hadoop.log.dir", "build/test/logs") ;
         dfsCluster = new MiniDFSCluster(configuration, numNodes, true, null) ;
         mrCluster = new MiniMRCluster(numNodes, dfsCluster.getFileSystem().getUri().toString(), 1) ;
