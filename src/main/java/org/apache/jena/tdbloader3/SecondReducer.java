@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.openjena.atlas.logging.Log;
 import org.openjena.riot.Lang;
@@ -60,11 +61,13 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
     private FileSystem fs;
     private Path outLocal;
     private Path outRemote;
+    private TaskAttemptID taskAttemptID;
     private Counters counters;
     
     @Override
     public void setup(Context context) {
-        String id = String.valueOf(context.getTaskAttemptID().getTaskID().getId());
+        this.taskAttemptID = context.getTaskAttemptID();
+        String id = String.valueOf(taskAttemptID.getTaskID().getId());
         
         log.debug("Loading offsets from DistributedCache...");
         offsets = loadOffsets(context);
@@ -80,7 +83,7 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
             fs = FileSystem.get(context.getConfiguration());
             outRemote = FileOutputFormat.getWorkOutputPath(context);
             log.debug("outRemote is {}", outRemote);
-            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + context.getTaskAttemptID());
+            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + taskAttemptID);
             fs.startLocalOutput(outRemote, outLocal);
         } catch (Exception e) {
             throw new TDBLoader3Exception(e);
