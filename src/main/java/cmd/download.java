@@ -32,13 +32,13 @@ import org.openjena.atlas.io.IO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.store.bulkloader.BulkLoader;
 import com.hp.hpl.jena.tdb.store.bulkloader2.CmdIndexBuild;
 import com.hp.hpl.jena.tdb.store.bulkloader2.ProgressLogger;
 import com.hp.hpl.jena.tdb.sys.Names;
-import com.hp.hpl.jena.tdb.sys.SetupTDB;
 
 public class download extends Configured implements Tool {
 
@@ -65,9 +65,10 @@ public class download extends Configured implements Tool {
 		Configuration configuration = getConf();
 
         Location location = new Location(args[2]);
-        DatasetGraphTDB dsgDisk = SetupTDB.buildDataset(location) ;
-        dsgDisk.sync(); 
-        dsgDisk.close();
+// I needed to comment this since there is a problem with the ARQ and TDB versions used, I'll be doing this manually for now. -- PC 
+//        DatasetGraphTDB dsgDisk = TDBFactory.createDatasetGraph(location) ;
+//        dsgDisk.sync(); 
+//        dsgDisk.close();
 
         FileSystem fs = FileSystem.get(configuration);
 
