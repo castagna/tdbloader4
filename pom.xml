@@ -10,7 +10,8 @@
 
   <properties>
     <hadoop.version>0.20.204.0</hadoop.version>
-    <tdb.version>0.9.0-incubating-SNAPSHOT</tdb.version>
+    <arq.version>2.8.9-SNAPSHOT</arq.version>
+    <tdb.version>0.8.10-JENA-137-TALIS</tdb.version>
     <commons-io.version>1.3.2</commons-io.version>
     <slf4j.version>1.6.2</slf4j.version>
     <junit.version>4.8.2</junit.version>
@@ -34,8 +35,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>jena-tdb</artifactId>
+      <groupId>com.hp.hpl.jena</groupId>
+      <artifactId>arq</artifactId>
+      <version>${arq.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.hp.hpl.jena</groupId>
+      <artifactId>tdb</artifactId>
       <version>${tdb.version}</version>
     </dependency>
 
@@ -142,6 +149,11 @@
   </build>
 
   <repositories>
+
+    <repository>
+      <id>talis-oss-releases</id>
+      <url>http://oss.talisplatform.com/content/repositories/talis-releases/</url>
+    </repository>
 
     <repository>
       <id>apache-snapshots-repo</id>
