@@ -76,7 +76,7 @@ public class tdbloader3 extends Configured implements Tool {
         boolean verify = configuration.getBoolean("verify", false);
         boolean runLocal = configuration.getBoolean("runLocal", false);
         
-        FileSystem fs = FileSystem.get(configuration);
+        FileSystem fs = FileSystem.get(new Path(args[1]).toUri(), configuration);
         if ( overrideOutput ) {
             fs.delete(new Path(args[1]), true);
             fs.delete(new Path(args[1] + "_1"), true);
