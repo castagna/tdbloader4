@@ -28,7 +28,6 @@ import org.apache.jena.tdbloader3.Constants;
 import org.apache.jena.tdbloader3.FourthDriver;
 import org.apache.jena.tdbloader3.NodeTableRewriter;
 import org.apache.jena.tdbloader3.SecondDriver;
-import org.openjena.atlas.io.IO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,7 +142,7 @@ public class download extends Configured implements Tool {
         	if ( prevIndexName == null ) prevIndexName = indexName;
         	if ( out == null ) out = new GZIPOutputStream(new FileOutputStream(new File(outPath, indexName + ".gz")));
 			if ( !prevIndexName.equals(indexName) ) {
-				if ( out != null ) IO.close(out);
+				if ( out != null ) out.close();
 				log.debug("Index name set to {}", indexName);
 				out = new GZIPOutputStream(new FileOutputStream(new File(outPath, indexName + ".gz")));
 			}
@@ -154,7 +153,7 @@ public class download extends Configured implements Tool {
 			file.delete();
 			prevIndexName = indexName;
 		}
-        if ( out != null ) IO.close(out);
+        if ( out != null ) out.close();
         
         // build B+Tree indexes
 		Location location = new Location(outPath);

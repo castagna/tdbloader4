@@ -152,6 +152,7 @@ public class NodeTableRewriter {
 		Iterator<Record> iter2 = Iter.iter(sortedDataBag.iterator()).map(transformPair2Record) ;
 	    BPlusTree bpt2 = BPlusTreeRewriter.packIntoBPlusTree(iter2, bptParams, recordFactory, blkMgrNodes, blkMgrRecords) ;
 	    bpt2.sync() ;
+	    bpt2.close() ;
 		
 		sortedDataBag.close();
 	}
