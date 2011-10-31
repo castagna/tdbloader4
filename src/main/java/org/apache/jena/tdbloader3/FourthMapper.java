@@ -23,6 +23,8 @@ import java.io.IOException;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.jena.tdbloader3.io.LongQuadWritable;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,12 +57,12 @@ public class FourthMapper extends Mapper<LongQuadWritable, NullWritable, LongQua
 			emit (context, g, s, p, o, "GSPO");
 			emit (context, g, p, o, s, "GPOS");
 			emit (context, g, o, s, p, "GOSP");
-			counters.incrementQuads();
+			EventManager.send(counters, new Event(Constants.eventQuad, null));
 		} else {
 			emit (context, s, p, o, -1l, "SPO");
 			emit (context, p, o, s, -1l, "POS");
 			emit (context, o, s, p, -1l, "OSP");
-			counters.incrementTriples();
+			EventManager.send(counters, new Event(Constants.eventTriple, null));
 		}
 
 	}

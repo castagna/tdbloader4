@@ -33,6 +33,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.jena.tdbloader3.io.LongQuadWritable;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +86,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 			out.write('\n');
 		}
 		context.progress();
-		counters.incrementRecords();
+		EventManager.send(counters, new Event(Constants.eventRecord, null));
         if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
 	}
 	

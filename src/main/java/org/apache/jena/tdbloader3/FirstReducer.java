@@ -24,6 +24,8 @@ import java.nio.ByteBuffer;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventManager;
 import org.openjena.atlas.logging.Log;
 import org.openjena.riot.Lang;
 import org.openjena.riot.system.ParserProfile;
@@ -71,7 +73,7 @@ public class FirstReducer extends Reducer<Text, Text, Text, LongWritable> {
 		int len = nodec.encode(node, bb, null);
 		sum += SystemTDB.SizeOfInt + len; // 4 is the overhead to store the length of the ByteBuffer
 
-		counters.incrementRdfNodes();
+		EventManager.send(counters, new Event(Constants.eventRdfNode, node));
 
 		if ( log.isDebugEnabled() ) log.debug("< {}: ({}, (null))", id, key);
 	}

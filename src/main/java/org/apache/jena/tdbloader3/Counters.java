@@ -20,8 +20,12 @@ package org.apache.jena.tdbloader3;
 
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventListener;
+import org.openjena.atlas.event.EventManager;
+import org.openjena.atlas.event.EventType;
 
-public class Counters {
+public class Counters implements EventListener {
 
 	private final TaskInputOutputContext<?,?,?,?> context;
 	
@@ -39,59 +43,69 @@ public class Counters {
     private long numRdfNodes = 0L;
     private long numRecords = 0L;
     private long n = 0L;
+    
+    private int tick;
 
 	public Counters (TaskInputOutputContext<?,?,?,?> context) {
+		this(context, 1000);
+	}
+
+	public Counters (TaskInputOutputContext<?,?,?,?> context, int tick) {
 		this.context = context;
+		this.tick = tick;
+
+		EventManager.register(this, Constants.eventQuad, this);
+		EventManager.register(this, Constants.eventTriple, this);
+		EventManager.register(this, Constants.eventDuplicate, this);
+		EventManager.register(this, Constants.eventMalformed, this);
+		EventManager.register(this, Constants.eventRdfNode, this);
+		EventManager.register(this, Constants.eventRecord, this);
 	}
 
-	public void incrementTriples() {
-		if ( counterTriples == null ) counterTriples = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_TRIPLES);
-		numTriples++;
-		n++;
-		report();
+	public void setTick(int tick) {
+		this.tick = tick;
 	}
 	
-	public void incrementQuads() {
-		if ( counterQuads == null ) counterQuads = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_QUADS);
-		numQuads++;
-		n++;
-		report();
+	public int getTick() {
+		return tick;
+	}
+
+	@Override
+	public void event(Object dest, Event event) {
+		if ( this.equals(dest) ) {
+			EventType type = event.getType();
+			if ( type.equals(Constants.eventQuad) ) {
+				if ( counterQuads == null ) counterQuads = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_QUADS);
+				numQuads++;
+			} else if ( type.equals(Constants.eventTriple) ) {
+				if ( counterTriples == null ) counterTriples = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_TRIPLES);
+				numTriples++;
+			} else if ( type.equals(Constants.eventDuplicate) ) {
+				if ( counterDuplicates == null ) counterDuplicates = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_DUPLICATES);
+				numDuplicates++;
+			} else if ( type.equals(Constants.eventMalformed) ) {
+				if ( counterMalformed == null ) counterMalformed = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_MALFORMED);
+				numMalformed++;
+			} else if ( type.equals(Constants.eventRdfNode) ) {
+				if ( counterRdfNodes == null ) counterRdfNodes = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RDFNODES);
+				numRdfNodes++;
+			} else if ( type.equals(Constants.eventRecord) ) {
+				if ( counterRecords == null ) counterRecords = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RECORDS);
+				numRecords++;
+			} else {
+				throw new TDBLoader3Exception("Unsupported event type: " + type);
+			}
+			n++;
+			report();
+		}		
 	}
 	
-	public void incrementDuplicates() {
-		if ( counterDuplicates == null ) counterDuplicates = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_DUPLICATES);
-		numDuplicates++;
-		n++;
-		report();
-	}
-	
-	public void incrementMalformed() {
-		if ( counterMalformed == null ) counterMalformed = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_MALFORMED);
-		numMalformed++;
-		n++;
-		report();
-	}
-
-	public void incrementRdfNodes() {
-		if ( counterRdfNodes == null ) counterRdfNodes = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RDFNODES);
-		numRdfNodes++;
-		n++;
-		report();
-	}
-
-	public void incrementRecords() {
-		if ( counterRecords == null ) counterRecords = context.getCounter(Constants.TDBLOADER3_COUNTER_GROUPNAME, Constants.TDBLOADER3_COUNTER_RECORDS);
-		numRecords++;
-		n++;
-		report();
-	}
-
 	public void close() {
 		increment();
 	}
 	
 	private void report() {
-		if ( n > 1000 ) {
+		if ( n > tick ) {
 			increment();
 		}
 	}
@@ -110,6 +124,8 @@ public class Counters {
 	    numMalformed = 0L;
 	    numRdfNodes = 0L;
 	    numRecords = 0L;
+
+		EventManager.send(null, new Event(Constants.eventTick, n));
 
 		n = 0L;
 	}

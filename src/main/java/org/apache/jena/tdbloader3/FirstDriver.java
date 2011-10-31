@@ -34,7 +34,6 @@ import org.apache.jena.tdbloader3.io.NQuadsInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class FirstDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FirstDriver.class);
@@ -58,7 +57,7 @@ public class FirstDriver extends Configured implements Tool {
 			ToolRunner.printGenericCommandUsage(System.err);
 			return -1;
 		}
-
+		
 		Configuration configuration = getConf();
         boolean useCompression = configuration.getBoolean("useCompression", false);
 		

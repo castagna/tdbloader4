@@ -32,6 +32,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventManager;
 import org.openjena.atlas.logging.Log;
 import org.openjena.riot.Lang;
 import org.openjena.riot.system.ParserProfile;
@@ -114,7 +116,7 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
 	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", _id, value);
 		}
 
-        counters.incrementRdfNodes();
+        EventManager.send(counters, new Event(Constants.eventRdfNode, node));
 	}
 
     @Override

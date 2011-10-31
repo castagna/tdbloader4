@@ -24,6 +24,8 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.jena.tdbloader3.io.LongQuadWritable;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,7 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
 			
 			long id = Long.parseLong(v[0]);
 			if ( v[1].equals("S") ) {
-				if ( s != -1l ) counters.incrementDuplicates();
+				if ( s != -1l ) EventManager.send(counters, new Event(Constants.eventDuplicate, null));
 				s = id; 
 			}
 			if ( v[1].equals("P") ) p = id;
@@ -63,16 +65,16 @@ public class ThirdReducer extends Reducer<Text, Text, LongQuadWritable, NullWrit
 		
 		if ( ( g != -1l ) && ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o, g);
-		    counters.incrementQuads();
+		    EventManager.send(counters, new Event(Constants.eventQuad, null));
 	        context.write(outputKey, outputValue);
 	        log.debug("> ({}, {})", outputKey, outputValue);
 		} else if ( ( s != -1l ) && ( p != -1l ) && ( o != -1l ) ) {
 		    outputKey.set(s, p, o);
-		    counters.incrementTriples();
+		    EventManager.send(counters, new Event(Constants.eventTriple, null));
 	        context.write(outputKey, outputValue);
 	        log.debug("> ({}, {})", outputKey, outputValue);
 		} else {
-			counters.incrementMalformed();
+			EventManager.send(counters, new Event(Constants.eventMalformed, null));
         	log.warn("WARNING: unexpected values for key {}", key );
 		}
         outputKey.clear();

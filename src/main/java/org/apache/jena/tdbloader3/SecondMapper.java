@@ -27,6 +27,8 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.jena.tdbloader3.io.QuadWritable;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,9 +105,9 @@ public class SecondMapper extends Mapper<LongWritable, QuadWritable, Text, Text>
                 gt.set(g);
                 Text hg = new Text(ht); hg.append(G, 0, G.length);
                 emit(context, gt, hg);
-                counters.incrementQuads();
+                EventManager.send(counters, new Event(Constants.eventQuad, quad));
             } else {
-            	counters.incrementTriples();
+            	EventManager.send(counters, new Event(Constants.eventTriple, quad.asTriple()));
             }
         } catch (Exception e) {
             throw new TDBLoader3Exception(e);

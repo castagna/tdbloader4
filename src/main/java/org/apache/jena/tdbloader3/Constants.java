@@ -18,6 +18,8 @@
 
 package org.apache.jena.tdbloader3;
 
+import org.openjena.atlas.event.EventType;
+
 public class Constants {
 
 	public static final String TDBLOADER3_COUNTER_GROUPNAME = "TDBLoader3 Counters";
@@ -42,4 +44,12 @@ public class Constants {
 	    "OSPG"
 	};
 
+	public static EventType eventQuad = new EventType("quad");
+	public static EventType eventTriple = new EventType("triple");
+	public static EventType eventDuplicate = new EventType("duplicate");
+	public static EventType eventMalformed = new EventType("malformed");
+	public static EventType eventRdfNode = new EventType("RDF node");
+	public static EventType eventRecord = new EventType("record");
+	public static EventType eventTick = new EventType("tick");
+	
 }

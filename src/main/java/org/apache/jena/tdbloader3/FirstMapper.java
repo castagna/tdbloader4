@@ -25,6 +25,8 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.jena.tdbloader3.io.QuadWritable;
+import org.openjena.atlas.event.Event;
+import org.openjena.atlas.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,9 +73,9 @@ public class FirstMapper extends Mapper<LongWritable, QuadWritable, Text, NullWr
             if ( g != null ) {
                 gt.set(g);
                 emit(context, gt);
-                counters.incrementQuads();
+                EventManager.send(counters, new Event(Constants.eventQuad, quad));
             } else {
-            	counters.incrementTriples();
+            	EventManager.send(counters, new Event(Constants.eventTriple, quad.asTriple()));
             }
         } catch (Exception e) {
             throw new TDBLoader3Exception(e);
