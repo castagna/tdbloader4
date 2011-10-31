@@ -79,7 +79,7 @@ public class TDBVerifier {
 			nodeValue = entry.getRight();
 			nodeIds.add(nodeId);
 			countRdfNodes++;
-			System.out.println(nodeId + ": " + nodeValue);
+			// System.out.println(nodeId + ": " + nodeValue);
 		}
 		System.out.println("Found " + countRdfNodes + " RDF nodes.");
 		System.out.println("Nodes.dat file size is: " + new File(filename).length());
@@ -113,11 +113,11 @@ public class TDBVerifier {
 			
 			while (iter.hasNext()) {
 				Record record = iter.next();
-				System.out.println(record);
+				// System.out.println(record);
 				Tuple<NodeId> tuple = TupleLib.tuple(record, colMap);
 
 				for (NodeId nodeId : tuple.asList()) {
-					if ( ! nodeIds.contains(nodeId) ) {
+					if ( ! nodeIds.contains(nodeId.getId()) ) {
 						System.out.println("NodeId " + nodeId.getId() + " is not in the node table!"); 
 					}
 					// assertTrue(nodeIds.contains(nodeId));		
