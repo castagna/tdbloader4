@@ -18,6 +18,11 @@
 
 package cmd;
 
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_1;
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_2;
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_3;
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_4;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -51,17 +56,13 @@ import org.slf4j.LoggerFactory;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.TDBLoader;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
-
-import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_1;
-import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_2;
-import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_3;
-import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_4;
 
 public class tdbloader3 extends Configured implements Tool {
 
@@ -87,8 +88,8 @@ public class tdbloader3 extends Configured implements Tool {
             fs.delete(new Path(args[1]), true);
             fs.delete(new Path(args[1] + OUTPUT_PATH_POSTFIX_1), true);
             fs.delete(new Path(args[1] + OUTPUT_PATH_POSTFIX_2), true);
-            fs.delete(new Path(args[1] + "_3"), true);
-            fs.delete(new Path(args[1] + "_4"), true);
+            fs.delete(new Path(args[1] + OUTPUT_PATH_POSTFIX_3), true);
+            fs.delete(new Path(args[1] + OUTPUT_PATH_POSTFIX_4), true);
         }
         
         if ( ( copyToLocal ) || ( runLocal ) ) {
@@ -166,8 +167,8 @@ public class tdbloader3 extends Configured implements Tool {
         log.debug("Offset file created.");
 	}
 	
-    public static boolean isomorphic(DatasetGraphTDB dsgMem, DatasetGraphTDB dsgDisk) {
-        if (!dsgMem.getDefaultGraphTDB().isIsomorphicWith(dsgDisk.getDefaultGraphTDB()))
+    public static boolean isomorphic(DatasetGraph dsgMem, DatasetGraph dsgDisk) {
+        if (!dsgMem.getDefaultGraph().isIsomorphicWith(dsgDisk.getDefaultGraph()))
             return false;
         Iterator<Node> graphsMem = dsgMem.listGraphNodes();
         Iterator<Node> graphsDisk = dsgDisk.listGraphNodes();
@@ -176,16 +177,16 @@ public class tdbloader3 extends Configured implements Tool {
 
         while (graphsMem.hasNext()) {
             Node graphNode = graphsMem.next();
-            if (dsgDisk.getGraphTDB(graphNode) == null) return false;
-            if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) return false;
+            if (dsgDisk.getGraph(graphNode) == null) return false;
+            if (!dsgMem.getGraph(graphNode).isIsomorphicWith(dsgDisk.getGraph(graphNode))) return false;
             seen.add(graphNode);
         }
 
         while (graphsDisk.hasNext()) {
             Node graphNode = graphsDisk.next();
             if (!seen.contains(graphNode)) {
-                if (dsgMem.getGraphTDB(graphNode) == null) return false;
-                if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) return false;
+                if (dsgMem.getGraph(graphNode) == null) return false;
+                if (!dsgMem.getGraph(graphNode).isIsomorphicWith(dsgDisk.getGraph(graphNode))) return false;
             }
         }
 
@@ -205,33 +206,33 @@ public class tdbloader3 extends Configured implements Tool {
         return dsg;
     }
     
-    public static String dump(DatasetGraphTDB dsgMem, DatasetGraphTDB dsgDisk) {
+    public static String dump(DatasetGraph dsgMem, DatasetGraph dsgDisk) {
         StringBuffer sb = new StringBuffer();
         sb.append("\n");
-        
-        if (!dsgMem.getDefaultGraphTDB().isIsomorphicWith(dsgDisk.getDefaultGraphTDB())) {
+
+        if (!dsgMem.getDefaultGraph().isIsomorphicWith(dsgDisk.getDefaultGraph())) {
             sb.append("Default graphs are not isomorphic [FAIL]\n");
             sb.append("    First:\n");
-            dump(sb, dsgMem.getDefaultGraphTDB());
+            dump(sb, dsgMem.getDefaultGraph());
             sb.append("    Second:\n");
-            dump(sb, dsgDisk.getDefaultGraphTDB());
+            dump(sb, dsgDisk.getDefaultGraph());
         } else {
             sb.append("Default graphs are isomorphic [OK]\n");
         }
-        
+
         Iterator<Node> graphsMem = dsgMem.listGraphNodes();
         Iterator<Node> graphsDisk = dsgDisk.listGraphNodes();
         Set<Node> seen = new HashSet<Node>();
-        
+
         while (graphsMem.hasNext()) {
             Node graphNode = graphsMem.next();
-            if (dsgDisk.getGraphTDB(graphNode) == null) sb.append(graphNode + " is present only in one dataset. [FAIL]\n");
-            if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) {
+            if (dsgDisk.getGraph(graphNode) == null) sb.append(graphNode + " is present only in one dataset. [FAIL]\n");
+            if (!dsgMem.getGraph(graphNode).isIsomorphicWith(dsgDisk.getGraph(graphNode))) {
                 sb.append("\n" + graphNode + " graphs are not isomorphic [FAIL]\n");
                 sb.append("    First:\n");
-                dump(sb, dsgMem.getGraphTDB(graphNode));
+                dump(sb, dsgMem.getGraph(graphNode));
                 sb.append("    Second:\n");
-                dump(sb, dsgDisk.getGraphTDB(graphNode));
+                dump(sb, dsgDisk.getGraph(graphNode));
             }
             seen.add(graphNode);
         }
@@ -239,17 +240,17 @@ public class tdbloader3 extends Configured implements Tool {
         while (graphsDisk.hasNext()) {
             Node graphNode = graphsDisk.next();
             if (!seen.contains(graphNode)) {
-                if (dsgMem.getGraphTDB(graphNode) == null) sb.append(graphNode + " is present only in one dataset. [FAIL]\n");
-                if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) {
+                if (dsgMem.getGraph(graphNode) == null) sb.append(graphNode + " is present only in one dataset. [FAIL]\n");
+                if (!dsgMem.getGraph(graphNode).isIsomorphicWith(dsgDisk.getGraph(graphNode))) {
                     sb.append("\n" + graphNode + " graphs are not isomorphic [FAIL]\n");
                     sb.append("    First:\n");
-                    dump(sb, dsgMem.getGraphTDB(graphNode));
+                    dump(sb, dsgMem.getGraph(graphNode));
                     sb.append("    Second:\n");
-                    dump(sb, dsgDisk.getGraphTDB(graphNode));
+                    dump(sb, dsgDisk.getGraph(graphNode));
                 }
             }
         }
-        
+
         return sb.toString();
     }
     

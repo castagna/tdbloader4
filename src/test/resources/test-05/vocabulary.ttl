@@ -1,0 +1,9 @@
+@prefix      : <http://www.example.com/ns#> .
+@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+:C1   rdfs:subClassOf :C2 .
+:C2   rdfs:subClassOf :C3 .
+:t    rdfs:subPropertyOf :s .
+:s    rdfs:subPropertyOf :p .
+:r    rdfs:subPropertyOf :q .
+:q    rdfs:subPropertyOf :p .

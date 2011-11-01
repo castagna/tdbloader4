@@ -164,5 +164,17 @@
     </repository>
 
   </repositories>
+  
+  <distributionManagement>
+    <downloadUrl>http://openjena.org/repo-dev</downloadUrl>
+    <repository>
+      <id>talis-releases</id>
+      <url>http://oss.talisplatform.com/content/repositories/talis-releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>talis-snapshots</id>
+      <url>http://oss.talisplatform.com/content/repositories/talis-snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
 
 </project>
