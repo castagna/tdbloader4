@@ -6,7 +6,8 @@ TODO
  - How to avoid copying the same jar each time we launch a MapReduce job?
    see: http://markmail.org/thread/sxnq4ini5fb3tivm
 
- - Add RDFS inference (a la RIOT infer command).
+ - Add stats MapReduce job step, similar to:
+   https://github.com/castagna/Apache-Jena-Examples/blob/master/src/main/java/org/apache/jena/examples/ExampleRIOT_02.java
 
  - Refactor download.java so that the download part is separate from the reconstruction of indexes.
  
