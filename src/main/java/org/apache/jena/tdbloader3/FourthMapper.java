@@ -43,7 +43,7 @@ public class FourthMapper extends Mapper<LongQuadWritable, NullWritable, LongQua
     
     @Override
 	public void map (LongQuadWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
-        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+        log.debug("< ({}, {})", key, value);
 
 		long s = key.get(0);
         long p = key.get(1);
@@ -71,7 +71,7 @@ public class FourthMapper extends Mapper<LongQuadWritable, NullWritable, LongQua
 	    outputKey.clear();
 	    outputKey.set(s, p, o, g, indexName);
 	    context.write(outputKey, outputValue);
-        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", outputKey, outputValue);	    
+        log.debug("> ({}, {})", outputKey, outputValue);	    
 	}
 	
     @Override

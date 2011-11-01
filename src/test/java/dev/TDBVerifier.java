@@ -113,7 +113,7 @@ public class TDBVerifier {
 			
 			while (iter.hasNext()) {
 				Record record = iter.next();
-				// System.out.println(record);
+				System.out.println(record);
 				Tuple<NodeId> tuple = TupleLib.tuple(record, colMap);
 
 				for (NodeId nodeId : tuple.asList()) {

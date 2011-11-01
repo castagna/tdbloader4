@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.jena.tdbloader3.Constants;
 import org.openjena.riot.lang.LabelToNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class MapReduceLabelToNode extends LabelToNode {
 
         public MapReduceAllocator (JobContext context, Path path) {
         	// This is to ensure that blank node allocation policy is constant when subsequent MapReduce jobs need that
-            this.runId = context.getConfiguration().get("runId") ;
+            this.runId = context.getConfiguration().get(Constants.RUN_ID) ;
             this.path = path;
         	log.debug("MapReduceAllocator({}, {})", runId, path) ;
         }

@@ -48,11 +48,11 @@ public class TestTDBLoader3Local {
         String input = "src/test/resources/input" ;
         String[] args = new String[] {
         		"-conf", "conf/hadoop-local.xml",  
-                "-D", "overrideOutput=true", 
-        		"-D", "useCompression=false", 
-                "-D", "copyToLocal=true", 
-        		"-D", "verify=false", 
-        		"-D", "runLocal=true",
+                "-D", Constants.OPTION_OVERRIDE_OUTPUT + "=true", 
+        		"-D", Constants.OPTION_USE_COMPRESSION + "=" + Constants.OPTION_USE_COMPRESSION_DEFAULT, 
+                "-D", Constants.OPTION_COPY_TO_LOCAL + "=true", 
+        		"-D", Constants.OPTION_VERIFY + "=false", 
+        		"-D", Constants.OPTION_RUN_LOCAL + "=true",
                 input, 
                 output
         };

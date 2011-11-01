@@ -49,12 +49,12 @@ public class TestTDBLoader3MiniMRCluster extends AbstractMiniMRClusterTest {
         String output = "target/output" ;
         String[] args = new String[] {
                 "-conf", config, 
-                "-D", "overrideOutput=true", 
-                "-D", "copyToLocal=true", 
-                "-D", "verify=true", 
-                "-D", "runLocal=false",
-                "-D", "numReducers=3", 
-                "-D", "numSamples=40", 
+                "-D", Constants.OPTION_OVERRIDE_OUTPUT + "=true", 
+                "-D", Constants.OPTION_COPY_TO_LOCAL + "=true", 
+                "-D", Constants.OPTION_VERIFY + "=true", 
+                "-D", Constants.OPTION_RUN_LOCAL + "=false",
+                "-D", Constants.OPTION_NUM_REDUCERS + "=3", 
+                "-D", Constants.OPTION_NUM_SAMPLES + "=40", 
                 input, 
                 output
         };

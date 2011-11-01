@@ -35,18 +35,9 @@ import org.apache.jena.tdbloader3.io.NQuadsInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class SecondDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(SecondDriver.class);
-
-    public static final String NAME = "second";
-    
-	public static final String TDBLOADER3_COUNTER_GROUPNAME = "TDBLoader3 Counters";
-	public static final String TDBLOADER3_COUNTER_MALFORMED = "Malformed";
-	public static final String TDBLOADER3_COUNTER_QUADS = "Quads (including duplicates)";
-	public static final String TDBLOADER3_COUNTER_TRIPLES = "Triples (including duplicates)";
-	public static final String TDBLOADER3_COUNTER_DUPLICATES = "Duplicates (quads or triples)";
     
 	public SecondDriver () {
 		super();
@@ -67,7 +58,7 @@ public class SecondDriver extends Configured implements Tool {
 		}
 
 		Configuration configuration = getConf();
-        boolean useCompression = configuration.getBoolean("useCompression", false);
+        boolean useCompression = configuration.getBoolean(Constants.OPTION_USE_COMPRESSION, Constants.OPTION_USE_COMPRESSION_DEFAULT);
 		
         if ( useCompression ) {
             configuration.setBoolean("mapred.compress.map.output", true);
@@ -75,10 +66,8 @@ public class SecondDriver extends Configured implements Tool {
     	    configuration.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
         }
 		
-        configuration.setInt("io.sort.factor", 100);
-
 		Job job = new Job(configuration);
-		job.setJobName(NAME);
+		job.setJobName(Constants.NAME_SECOND);
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
@@ -108,7 +97,7 @@ public class SecondDriver extends Configured implements Tool {
 	}
 	
 	public static void main(String[] args) throws Exception {
-	    if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
+	    log.debug("main method: {}", Utils.toString(args));
 		int exitCode = ToolRunner.run(new SecondDriver(), args);
 		System.exit(exitCode);
 	}

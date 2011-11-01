@@ -59,7 +59,7 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 	private int numReduceTasks;
 	
 	public TotalOrderPartitioner() {
-		if ( log.isDebugEnabled() ) log.debug("constructor()");
+		log.debug("constructor()");
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 	 */
 	// keytype from conf not static
 	public void setConf(Configuration conf) {
-		if ( log.isDebugEnabled() ) log.debug("setConf({})", conf);
+		log.debug("setConf({})", conf);
 		this.conf = conf;
 		init("GSPO", conf);
 		init("GPOS", conf);
@@ -85,7 +85,7 @@ public class TotalOrderPartitioner<K extends WritableComparable<?>, V> extends P
 		init("SPO", conf);
 		init("POS", conf);
 		init("OSP", conf);
-		if ( log.isDebugEnabled() ) log.debug("setConf() finished.");		
+		log.debug("setConf() finished.");		
 	}
 	
 	@SuppressWarnings("unchecked")

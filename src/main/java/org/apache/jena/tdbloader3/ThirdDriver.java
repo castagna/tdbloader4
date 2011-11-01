@@ -42,9 +42,7 @@ public class ThirdDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(ThirdDriver.class);
 
-    public static final String NAME = "third";
-
-	public ThirdDriver () {
+    public ThirdDriver () {
 		super();
 	    log.debug("constructed with no configuration.");
 	}
@@ -65,7 +63,7 @@ public class ThirdDriver extends Configured implements Tool {
 		log.debug("input: {}, output: {}", args[0], args[1]);
 		
 		Configuration configuration = getConf();
-        boolean useCompression = configuration.getBoolean("useCompression", false);
+        boolean useCompression = configuration.getBoolean(Constants.OPTION_USE_COMPRESSION, Constants.OPTION_USE_COMPRESSION_DEFAULT);
         log.debug("Compression is {}", useCompression ? "enabled" : "disabled" );
 
         if ( useCompression ) {
@@ -75,7 +73,7 @@ public class ThirdDriver extends Configured implements Tool {
         }
 		
 		Job job = new Job(configuration);
-		job.setJobName(NAME);
+		job.setJobName(Constants.NAME_THIRD);
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
@@ -108,7 +106,7 @@ public class ThirdDriver extends Configured implements Tool {
 	}
 	
 	public static void main(String[] args) throws Exception {
-        if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
+        log.debug("main method: {}", Utils.toString(args));
 	    int exitCode = ToolRunner.run(new ThirdDriver(), args);
 		System.exit(exitCode);
 	}
@@ -118,6 +116,6 @@ public class ThirdDriver extends Configured implements Tool {
 class ExcludeNodeTableFilter implements PathFilter {
     public boolean accept(Path p) {
         String name = p.getName();
-        return !name.startsWith("node") && !name.startsWith(FirstDriver.NAME) && !name.startsWith(SecondDriver.NAME);
+        return !name.startsWith("node") && !name.startsWith(Constants.NAME_FIRST) && !name.startsWith(Constants.NAME_SECOND);
     }
 }

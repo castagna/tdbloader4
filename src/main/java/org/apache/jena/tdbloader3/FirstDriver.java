@@ -38,16 +38,14 @@ public class FirstDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FirstDriver.class);
 
-    public static final String NAME = "first";
-    
-	public FirstDriver () {
+    public FirstDriver () {
 		super();
-		if ( log.isDebugEnabled() ) log.debug("constructed with no configuration.");
+		log.debug("constructed with no configuration.");
 	}
 
 	public FirstDriver (Configuration configuration) {
 		super(configuration);
-        if ( log.isDebugEnabled() ) log.debug("constructed with configuration.");
+        log.debug("constructed with configuration.");
 	}
 
 	@Override
@@ -59,7 +57,7 @@ public class FirstDriver extends Configured implements Tool {
 		}
 		
 		Configuration configuration = getConf();
-        boolean useCompression = configuration.getBoolean("useCompression", false);
+        boolean useCompression = configuration.getBoolean(Constants.OPTION_USE_COMPRESSION, Constants.OPTION_USE_COMPRESSION_DEFAULT);
 		
         if ( useCompression ) {
             configuration.setBoolean("mapred.compress.map.output", true);
@@ -67,10 +65,8 @@ public class FirstDriver extends Configured implements Tool {
     	    configuration.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
         }
 		
-        configuration.setInt("io.sort.factor", 100);
-
 		Job job = new Job(configuration);
-		job.setJobName(NAME);
+		job.setJobName(Constants.NAME_FIRST);
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
@@ -95,7 +91,7 @@ public class FirstDriver extends Configured implements Tool {
 	}
 	
 	public static void main(String[] args) throws Exception {
-	    if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
+	    log.debug("main method: {}", Utils.toString(args));
 		int exitCode = ToolRunner.run(new FirstDriver(), args);
 		System.exit(exitCode);
 	}

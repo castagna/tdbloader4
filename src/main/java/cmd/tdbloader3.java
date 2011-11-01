@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.jena.tdbloader3.Constants;
 import org.apache.jena.tdbloader3.FirstDriver;
 import org.apache.jena.tdbloader3.FourthDriver;
 import org.apache.jena.tdbloader3.SecondDriver;
@@ -57,6 +58,11 @@ import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_1;
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_2;
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_3;
+import static org.apache.jena.tdbloader3.Constants.OUTPUT_PATH_POSTFIX_4;
+
 public class tdbloader3 extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(tdbloader3.class);
@@ -70,17 +76,17 @@ public class tdbloader3 extends Configured implements Tool {
 		}
 		
 		Configuration configuration = getConf();
-		configuration.set("runId", String.valueOf(System.currentTimeMillis()));
-        boolean overrideOutput = configuration.getBoolean("overrideOutput", false);
-        boolean copyToLocal = configuration.getBoolean("copyToLocal", true);
-        boolean verify = configuration.getBoolean("verify", false);
-        boolean runLocal = configuration.getBoolean("runLocal", false);
+		configuration.set(Constants.RUN_ID, String.valueOf(System.currentTimeMillis()));
+        boolean overrideOutput = configuration.getBoolean(Constants.OPTION_OVERRIDE_OUTPUT, Constants.OPTION_OVERRIDE_OUTPUT_DEFAULT);
+        boolean copyToLocal = configuration.getBoolean(Constants.OPTION_COPY_TO_LOCAL, Constants.OPTION_COPY_TO_LOCAL_DEFAULT);
+        boolean verify = configuration.getBoolean(Constants.OPTION_VERIFY, Constants.OPTION_VERIFY_DEFAULT);
+        boolean runLocal = configuration.getBoolean(Constants.OPTION_RUN_LOCAL, Constants.OPTION_RUN_LOCAL_DEFAULT);
         
         FileSystem fs = FileSystem.get(new Path(args[1]).toUri(), configuration);
         if ( overrideOutput ) {
             fs.delete(new Path(args[1]), true);
-            fs.delete(new Path(args[1] + "_1"), true);
-            fs.delete(new Path(args[1] + "_2"), true);
+            fs.delete(new Path(args[1] + OUTPUT_PATH_POSTFIX_1), true);
+            fs.delete(new Path(args[1] + OUTPUT_PATH_POSTFIX_2), true);
             fs.delete(new Path(args[1] + "_3"), true);
             fs.delete(new Path(args[1] + "_4"), true);
         }
@@ -91,24 +97,24 @@ public class tdbloader3 extends Configured implements Tool {
         }
 		
         Tool first = new FirstDriver(configuration);
-        first.run(new String[] { args[0], args[1] + "_1" });
+        first.run(new String[] { args[0], args[1] + OUTPUT_PATH_POSTFIX_1 });
 
-        createOffsetsFile(fs, args[1] + "_1", args[1] + "_1");
-        Path offsets = new Path(args[1] + "_1", "offsets.txt");
+        createOffsetsFile(fs, args[1] + OUTPUT_PATH_POSTFIX_1, args[1] + OUTPUT_PATH_POSTFIX_1);
+        Path offsets = new Path(args[1] + OUTPUT_PATH_POSTFIX_1, Constants.OFFSETS_FILENAME);
         DistributedCache.addCacheFile(offsets.toUri(), configuration);
         
         Tool second = new SecondDriver(configuration);
-        second.run(new String[] { args[0], args[1] + "_2" });
+        second.run(new String[] { args[0], args[1] + OUTPUT_PATH_POSTFIX_2 });
 
         Tool third = new ThirdDriver(configuration);
-        third.run(new String[] { args[1] + "_2", args[1] + "_3" });
+        third.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_2, args[1] + OUTPUT_PATH_POSTFIX_3 });
 
         Tool fourth = new FourthDriver(configuration);
-        fourth.run(new String[] { args[1] + "_3", args[1] + "_4" });
+        fourth.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_3, args[1] + OUTPUT_PATH_POSTFIX_4 });
         
         if ( copyToLocal ) {
         	Tool download = new download(configuration);
-        	download.run(new String[] { args[1] + "_2", args[1] + "_4", args[1] });
+        	download.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_2, args[1] + OUTPUT_PATH_POSTFIX_4, args[1] });
         }
         
         if ( verify ) {
@@ -151,7 +157,7 @@ public class tdbloader3 extends Configured implements Tool {
         	}
 		}
 
-        Path outputPath = new Path(output, "offsets.txt");
+        Path outputPath = new Path(output, Constants.OFFSETS_FILENAME);
         PrintWriter out = new PrintWriter(new OutputStreamWriter( fs.create(outputPath)));
         for (Long partition : offsets.keySet()) {
 			out.println(partition + "\t" + offsets.get(partition));
@@ -212,7 +218,38 @@ public class tdbloader3 extends Configured implements Tool {
         } else {
             sb.append("Default graphs are isomorphic [OK]\n");
         }
-            
+        
+        Iterator<Node> graphsMem = dsgMem.listGraphNodes();
+        Iterator<Node> graphsDisk = dsgDisk.listGraphNodes();
+        Set<Node> seen = new HashSet<Node>();
+        
+        while (graphsMem.hasNext()) {
+            Node graphNode = graphsMem.next();
+            if (dsgDisk.getGraphTDB(graphNode) == null) sb.append(graphNode + " is present only in one dataset. [FAIL]\n");
+            if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) {
+                sb.append("\n" + graphNode + " graphs are not isomorphic [FAIL]\n");
+                sb.append("    First:\n");
+                dump(sb, dsgMem.getGraphTDB(graphNode));
+                sb.append("    Second:\n");
+                dump(sb, dsgDisk.getGraphTDB(graphNode));
+            }
+            seen.add(graphNode);
+        }
+
+        while (graphsDisk.hasNext()) {
+            Node graphNode = graphsDisk.next();
+            if (!seen.contains(graphNode)) {
+                if (dsgMem.getGraphTDB(graphNode) == null) sb.append(graphNode + " is present only in one dataset. [FAIL]\n");
+                if (!dsgMem.getGraphTDB(graphNode).isIsomorphicWith(dsgDisk.getGraphTDB(graphNode))) {
+                    sb.append("\n" + graphNode + " graphs are not isomorphic [FAIL]\n");
+                    sb.append("    First:\n");
+                    dump(sb, dsgMem.getGraphTDB(graphNode));
+                    sb.append("    Second:\n");
+                    dump(sb, dsgDisk.getGraphTDB(graphNode));
+                }
+            }
+        }
+        
         return sb.toString();
     }
     

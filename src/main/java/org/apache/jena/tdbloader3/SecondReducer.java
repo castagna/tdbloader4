@@ -111,9 +111,9 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
 		LongWritable _id = new LongWritable(id + offset);
 
         for (Text value : values) {
-	        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, value);
+	        log.debug("< ({}, {})", key, value);
 			context.write(_id, value);
-	        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", _id, value);
+	        log.debug("> ({}, {})", _id, value);
 		}
 
         EventManager.send(counters, new Event(Constants.eventRdfNode, node));
@@ -144,7 +144,7 @@ public class SecondReducer extends Reducer<Text, Text, LongWritable, Text> {
 				}
 			}
 			for (Path file : cachedFiles) {
-				if ( "offsets.txt".equals(file.getName()) ) {
+				if ( Constants.OFFSETS_FILENAME.equals(file.getName()) ) {
 					log.debug("Reading offsets file found in DistributedCache...");
 					BufferedReader in = new BufferedReader(new FileReader(file.toString()));
 					String str;

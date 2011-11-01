@@ -69,7 +69,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 
 	@Override
 	public void reduce(LongQuadWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
-        if ( log.isDebugEnabled() ) log.debug("< ({}, {})", key, values.iterator().next());
+        log.debug("< ({}, {})", key, values.iterator().next());
 
 		String filename = key.getIndexName();
 		OutputStream out = getOutputStream(filename);
@@ -87,7 +87,7 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 		}
 		context.progress();
 		EventManager.send(counters, new Event(Constants.eventRecord, null));
-        if ( log.isDebugEnabled() ) log.debug("> {}:{}", filename, key);
+        log.debug("> {}:{}", filename, key);
 	}
 	
 	private OutputStream getOutputStream(String filename) throws IOException {

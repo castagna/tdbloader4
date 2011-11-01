@@ -72,17 +72,16 @@ public class Utils {
 	}
 
 	public static void setReducers(Job job, Configuration configuration, Logger log) {
-	    boolean runLocal = configuration.getBoolean("runLocal", false);
-	    int num_reducers = configuration.getInt("numReducers", Constants.DEFAULT_NUM_REDUCERS);
+	    boolean runLocal = configuration.getBoolean(Constants.OPTION_RUN_LOCAL, Constants.OPTION_RUN_LOCAL_DEFAULT);
+	    int num_reducers = configuration.getInt(Constants.OPTION_NUM_REDUCERS, Constants.OPTION_NUM_REDUCERS_DEFAULT);
 	
 	    // TODO: should we comment this out and let Hadoop decide the number of reducers?
 	    if ( runLocal ) {
 	    	if (log != null) log.debug("Setting number of reducers to {}", 1);
 	        job.setNumReduceTasks(1);           
 	    } else {
-	    	// number of reducers must be the same as in FirstDriverAlternative to ensure offsets are correct
 	    	if (log != null) log.debug("Setting number of reducers to {}", num_reducers);
-	    	if ( "fourth".equals( job.getJobName() ) ) {
+	    	if ( Constants.NAME_FOURTH.equals( job.getJobName() ) ) {
 				job.setPartitionerClass(TotalOrderPartitioner.class);
 				job.setNumReduceTasks(9 * num_reducers);
 	    	} else {

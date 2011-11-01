@@ -75,13 +75,13 @@ public class FirstReducer extends Reducer<Text, Text, Text, LongWritable> {
 
 		EventManager.send(counters, new Event(Constants.eventRdfNode, node));
 
-		if ( log.isDebugEnabled() ) log.debug("< {}: ({}, (null))", id, key);
+		log.debug("< {}: ({}, (null))", id, key);
 	}
 
     @Override
     public void cleanup(Context context) throws IOException {
         LongWritable value = new LongWritable(sum);
-        if ( log.isDebugEnabled() ) log.debug("> ({}, {})", key, value);
+        log.debug("> ({}, {})", key, value);
         try {
             context.write(key, value);
             super.cleanup(context); // is this necessary?

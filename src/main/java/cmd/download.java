@@ -43,9 +43,7 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.jena.tdbloader3.Constants;
-import org.apache.jena.tdbloader3.FourthDriver;
 import org.apache.jena.tdbloader3.NodeTableRewriter;
-import org.apache.jena.tdbloader3.SecondDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +104,7 @@ public class download extends Configured implements Tool {
 		for ( FileStatus fileStatus : status ) {
             Path path = fileStatus.getPath();
             String pathName = path.getName();
-            if ( pathName.startsWith(SecondDriver.NAME) ) {
+            if ( pathName.startsWith(Constants.NAME_SECOND) ) {
             	paths.put(pathName, path);
             }
         }
@@ -130,7 +128,7 @@ public class download extends Configured implements Tool {
 		for ( FileStatus fileStatus : status ) {
             Path path = fileStatus.getPath();
             String pathName = path.getName();
-            if ( pathName.startsWith(FourthDriver.NAME) ) {
+            if ( pathName.startsWith(Constants.NAME_FOURTH) ) {
             	paths.put(pathName, path);
             }
         }

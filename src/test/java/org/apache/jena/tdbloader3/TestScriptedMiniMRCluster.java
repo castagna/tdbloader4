@@ -80,13 +80,13 @@ public class TestScriptedMiniMRCluster extends AbstractMiniMRClusterTest {
     private void run ( String input, String output ) throws Exception {
         String[] args = new String[] {
                 "-conf", config, 
-        		"-D", "overrideOutput=true", 
-        		"-D", "useCompression=false", 
-        		"-D", "copyToLocal=true", 
-        		"-D", "verify=false", 
-                "-D", "runLocal=false",
-                "-D", "numReducers=3", 
-                "-D", "numSamples=30", 
+        		"-D", Constants.OPTION_OVERRIDE_OUTPUT + "=true", 
+        		"-D", Constants.OPTION_USE_COMPRESSION + "=" + Constants.OPTION_USE_COMPRESSION_DEFAULT, 
+        		"-D", Constants.OPTION_COPY_TO_LOCAL + "=true", 
+        		"-D", Constants.OPTION_VERIFY + "=false", 
+                "-D", Constants.OPTION_RUN_LOCAL + "=false",
+                "-D", Constants.OPTION_NUM_REDUCERS + "=3", 
+                "-D", Constants.OPTION_NUM_SAMPLES + "numSamples=30", 
                 input, 
                 output
         };

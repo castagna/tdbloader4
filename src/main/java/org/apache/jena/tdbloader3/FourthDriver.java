@@ -42,10 +42,6 @@ public class FourthDriver extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(FourthDriver.class);
 
-    public static final String NAME = "fourth";
-	public static final int DEFAULT_NUM_SAMPLES = 30;
-	public static final int DEFAULT_MAX_SPLITS_SAMPLED = 10; 
-    
     public FourthDriver () {
 		super();
         log.debug("constructed with no configuration.");
@@ -63,19 +59,19 @@ public class FourthDriver extends Configured implements Tool {
 			ToolRunner.printGenericCommandUsage(System.err);
 			return -1;
 		}
-		
+
 		Configuration configuration = getConf();
-        int num_samples = configuration.getInt("numSamples", DEFAULT_NUM_SAMPLES);
-        int max_splits_sampled = configuration.getInt("maxSplitsSampled", DEFAULT_MAX_SPLITS_SAMPLED);
+        int num_samples = configuration.getInt(Constants.OPTION_NUM_SAMPLES, Constants.OPTION_NUM_SAMPLES_DEFAULT);
+        int max_splits_sampled = configuration.getInt(Constants.OPTION_MAX_SPLITS_SAMPLED, Constants.OPTION_MAX_SPLITS_SAMPLED_DEFAULT);
 
         // We need to call setPartitionFile before we create a new Job!
         FileSystem fs = FileSystem.get(configuration);
         TotalOrderPartitioner.setPartitionFile(configuration, new Path(args[0], "_partitions").makeQualified(fs));
-        
+
 		Job job = new Job(configuration);
-		job.setJobName(NAME);
+		job.setJobName(Constants.NAME_FOURTH);
 		job.setJarByClass(getClass());
-		
+
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
@@ -102,7 +98,7 @@ public class FourthDriver extends Configured implements Tool {
 	}
 	
 	public static void main(String[] args) throws Exception {
-        if ( log.isDebugEnabled() ) log.debug("main method: {}", Utils.toString(args));
+        log.debug("main method: {}", Utils.toString(args));
 	    int exitCode = ToolRunner.run(new FourthDriver(), args);
 		System.exit(exitCode);
 	}
