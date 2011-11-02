@@ -32,15 +32,15 @@ import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.sparql.core.Quad;
 
-public class QuadMapReduceSink implements Sink<Quad> {
+public class SinkQuadMapReduce implements Sink<Quad> {
 
-    private static final Logger log = LoggerFactory.getLogger(QuadMapReduceSink.class);
+    private static final Logger log = LoggerFactory.getLogger(SinkQuadMapReduce.class);
 	
 	private final TaskInputOutputContext<? extends Writable, ? extends Writable,Text,NullWritable> context;
 	private Text key = new Text();
     private final NullWritable value = NullWritable.get();
 
-	public QuadMapReduceSink (TaskInputOutputContext<? extends Writable,? extends Writable,Text,NullWritable> context) {
+	public SinkQuadMapReduce (TaskInputOutputContext<? extends Writable,? extends Writable,Text,NullWritable> context) {
 		this.context = context;
 		log.debug("constructed with context {}", context);
 	}

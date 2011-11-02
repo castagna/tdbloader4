@@ -26,7 +26,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.jena.tdbloader3.io.QuadMapReduceSink;
+import org.apache.jena.tdbloader3.io.SinkQuadMapReduce;
 import org.apache.jena.tdbloader3.io.QuadWritable;
 import org.openjena.atlas.event.Event;
 import org.openjena.atlas.event.EventManager;
@@ -57,7 +57,7 @@ public class InferMapper extends Mapper<LongWritable, QuadWritable, Text, NullWr
     		FileManager.get().readModel(vocabulary, file.toString());
     		
     	}
-        sink = InfFactory.infQuads(new QuadMapReduceSink(context), vocabulary);
+        sink = InfFactory.infQuads(new SinkQuadMapReduce(context), vocabulary);
     };
     
     @Override

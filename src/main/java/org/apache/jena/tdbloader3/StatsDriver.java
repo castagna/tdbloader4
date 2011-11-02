@@ -20,9 +20,9 @@ package org.apache.jena.tdbloader3;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -34,16 +34,16 @@ import org.apache.jena.tdbloader3.io.NQuadsInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FirstDriver extends Configured implements Tool {
+public class StatsDriver extends Configured implements Tool {
 
-    private static final Logger log = LoggerFactory.getLogger(FirstDriver.class);
+    private static final Logger log = LoggerFactory.getLogger(StatsDriver.class);
 
-    public FirstDriver () {
+	public StatsDriver() {
 		super();
-		log.debug("constructed with no configuration.");
+        log.debug("constructed with no configuration.");
 	}
-
-	public FirstDriver (Configuration configuration) {
+	
+	public StatsDriver(Configuration configuration) {
 		super(configuration);
         log.debug("constructed with configuration.");
 	}
@@ -64,24 +64,32 @@ public class FirstDriver extends Configured implements Tool {
     	    configuration.set("mapred.output.compression.type", "BLOCK");
     	    configuration.set("mapred.map.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
         }
-		
+
+        boolean overrideOutput = configuration.getBoolean(Constants.OPTION_OVERRIDE_OUTPUT, Constants.OPTION_OVERRIDE_OUTPUT_DEFAULT);
+        FileSystem fs = FileSystem.get(new Path(args[1]).toUri(), configuration);
+        if ( overrideOutput ) {
+            fs.delete(new Path(args[1]), true);
+        }
+        
 		Job job = new Job(configuration);
-		job.setJobName(Constants.NAME_FIRST);
+		job.setJobName(Constants.NAME_STATS);
 		job.setJarByClass(getClass());
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         job.setInputFormatClass(NQuadsInputFormat.class);
-        job.setMapperClass(FirstMapper.class);		    
+
+        job.setMapperClass(StatsMapper.class);		    
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(NullWritable.class);
-		
-		job.setReducerClass(FirstReducer.class);
+		job.setMapOutputValueClass(IntWritable.class);
+		job.setCombinerClass(StatsReducer.class);
+
+		job.setReducerClass(StatsReducer.class);
 	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(LongWritable.class);
+	    job.setOutputValueClass(IntWritable.class);
 		
-	    Utils.setReducers(job, configuration, log);
+		Utils.setReducers(job, configuration, log);
 
        	job.setOutputFormatClass(TextOutputFormat.class);
 
@@ -92,7 +100,7 @@ public class FirstDriver extends Configured implements Tool {
 	
 	public static void main(String[] args) throws Exception {
 	    log.debug("main method: {}", Utils.toString(args));
-		int exitCode = ToolRunner.run(new FirstDriver(), args);
+		int exitCode = ToolRunner.run(new Configuration(), new StatsDriver(), args);
 		System.exit(exitCode);
 	}
 	

@@ -23,7 +23,8 @@ import org.openjena.atlas.event.EventType;
 public class Constants {
 
 	// Job names
-	
+
+	public static final String NAME_STATS = "tdbloader3-stats";
 	public static final String NAME_INFER = "tdbloader3-inference";
 	public static final String NAME_FIRST = "tdbloader3-first";
 	public static final String NAME_SECOND = "tdbloader3-second";

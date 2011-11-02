@@ -78,15 +78,14 @@ public class Utils {
 	    // TODO: should we comment this out and let Hadoop decide the number of reducers?
 	    if ( runLocal ) {
 	    	if (log != null) log.debug("Setting number of reducers to {}", 1);
-	        job.setNumReduceTasks(1);           
+	        job.setNumReduceTasks(1);
 	    } else {
-	    	if (log != null) log.debug("Setting number of reducers to {}", num_reducers);
 	    	if ( Constants.NAME_FOURTH.equals( job.getJobName() ) ) {
 				job.setPartitionerClass(TotalOrderPartitioner.class);
-				job.setNumReduceTasks(9 * num_reducers);
-	    	} else {
-	    		job.setNumReduceTasks(num_reducers);
+				num_reducers = 9 * num_reducers;
 	    	}
+    		job.setNumReduceTasks(num_reducers);
+	    	if (log != null) log.debug("Setting number of reducers to {}", num_reducers);
 	    }
 	}
 

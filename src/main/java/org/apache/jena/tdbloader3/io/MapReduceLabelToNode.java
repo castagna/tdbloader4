@@ -52,7 +52,11 @@ public class MapReduceLabelToNode extends LabelToNode {
 
         public MapReduceAllocator (JobContext context, Path path) {
         	// This is to ensure that blank node allocation policy is constant when subsequent MapReduce jobs need that
-            this.runId = context.getConfiguration().get(Constants.RUN_ID) ;
+            this.runId = context.getConfiguration().get(Constants.RUN_ID);
+            if ( this.runId == null ) {
+            	this.runId = String.valueOf(System.currentTimeMillis());
+            	log.warn("runId was not set, it has now been set to {}. Sequence of MapReduce jobs must handle carefully blank nodes.", runId);
+            }
             this.path = path;
         	log.debug("MapReduceAllocator({}, {})", runId, path) ;
         }
