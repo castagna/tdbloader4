@@ -41,27 +41,33 @@ public class StatsMapper extends Mapper<LongWritable, QuadWritable, Text, IntWri
     private Counters counters;
     private Text outputKey = new Text();
     private static final IntWritable one = new IntWritable(1);
+
+    private static final String LABEL_TRIPLE = "t";
+    private static final String LABEL_QUAD = "q";
+
     private static final String LABEL_PROPERTY = "p";
     private static final String LABEL_CLASS = "c";
     private static final String LABEL_NAMESPACE = "n";
-    private static final String LABEL_TOTAL_POSTFIX = "t";
-    private static final String LABEL_PER_GRAPH_POSTFIX = "g";
     
-//    @Override
-//    protected void setup(Context context) throws IOException, InterruptedException {
-//    	counters = new Counters(context);
-//    };
+    private static final String POSTFIX_TOTAL = "t";
+    private static final String POSTFIX_PER_GRAPH = "g";
+    
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+    	counters = new Counters(context);
+    };
     
     @Override
 	public void map (LongWritable key, QuadWritable value, Context context) throws IOException, InterruptedException {
         log.debug("< ({}, {})", key, value);
 
         Quad quad = value.getQuad();
-		if ( quad.isTriple() ) {
-			EventManager.send(counters, new Event(Constants.eventQuad, null));
-		} else {
-			EventManager.send(counters, new Event(Constants.eventTriple, null));
-		}
+        if ( quad.isTriple() ) {
+    		EventManager.send(counters, new Event(Constants.eventTriple, null));
+        } else {
+    		EventManager.send(counters, new Event(Constants.eventQuad, null));
+        }
+        emit (quad, context);
 
 		Node g = quad.getGraph();
 		Node p = quad.getPredicate();
@@ -77,52 +83,62 @@ public class StatsMapper extends Mapper<LongWritable, QuadWritable, Text, IntWri
 		}
 	}
 
+    private void emit(Quad quad, Context context) throws IOException, InterruptedException {
+    	StringBuffer sb = new StringBuffer();
+    	String label = quad.isTriple() ? LABEL_TRIPLE : LABEL_QUAD;
+
+    	sb.append(label);
+    	sb.append(POSTFIX_TOTAL);
+    	emit(sb, context);
+
+    	sb = new StringBuffer();
+    	sb.append(label);
+    	sb.append(POSTFIX_PER_GRAPH);
+		sb.append("|");
+		sb.append(quad.getGraph());
+		emit(sb, context);
+    }
+    
     private void emit(String label, Node graph, Node node, Context context) throws IOException, InterruptedException {
 		StringBuffer sb = new StringBuffer(label);
-		sb.append(LABEL_TOTAL_POSTFIX);
+		sb.append(POSTFIX_TOTAL);
 		sb.append("|");
 		sb.append(node.getURI());
-		outputKey.set(sb.toString());
-		context.write(outputKey, one);
-		log.debug("> ({}, {})", outputKey, one);
-		outputKey.clear();
+		emit(sb, context);
 		
 		sb = new StringBuffer(label);
-		sb.append(LABEL_PER_GRAPH_POSTFIX);
+		sb.append(POSTFIX_PER_GRAPH);
 		sb.append("|");
 		sb.append(graph.getURI());
 		sb.append("|");
 		sb.append(node.getURI());
-		outputKey.set(sb.toString());
-		context.write(outputKey, one);
-		log.debug("> ({}, {})", outputKey, one);
-		outputKey.clear();
+		emit(sb, context);
 		
 		sb = new StringBuffer(LABEL_NAMESPACE);
-		sb.append(LABEL_TOTAL_POSTFIX);
+		sb.append(POSTFIX_TOTAL);
 		sb.append("|");
 		sb.append(node.getNameSpace());
-		outputKey.set(sb.toString());
-		context.write(outputKey, one);
-		log.debug("> ({}, {})", outputKey, one);
-		outputKey.clear();
+		emit(sb, context);
 
 		sb = new StringBuffer(LABEL_NAMESPACE);
-		sb.append(LABEL_PER_GRAPH_POSTFIX);
+		sb.append(POSTFIX_PER_GRAPH);
 		sb.append("|");
 		sb.append(graph.getURI());
 		sb.append("|");
 		sb.append(node.getNameSpace());
+		emit(sb, context);
+    }
+    
+    private void emit (StringBuffer sb, Context context) throws IOException, InterruptedException {
 		outputKey.set(sb.toString());
 		context.write(outputKey, one);
 		log.debug("> ({}, {})", outputKey, one);
 		outputKey.clear();
     }
     
-//    @Override
-//    protected void cleanup(Context context) throws IOException, InterruptedException {
-//    	super.cleanup(context);
-//    	counters.close();
-//    }
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+    	counters.close();
+    }
 
 }

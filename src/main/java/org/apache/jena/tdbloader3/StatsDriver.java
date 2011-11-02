@@ -89,6 +89,8 @@ public class StatsDriver extends Configured implements Tool {
 	    job.setOutputKeyClass(Text.class);
 	    job.setOutputValueClass(IntWritable.class);
 		
+	    // we use the combiner, 1 reducer here is not a problem
+	    configuration.set(Constants.OPTION_NUM_REDUCERS, "1");
 		Utils.setReducers(job, configuration, log);
 
        	job.setOutputFormatClass(TextOutputFormat.class);
