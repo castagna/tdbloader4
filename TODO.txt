@@ -1,6 +1,13 @@
 TODO
 ----
 
+ - nodes.dat files in output_2 should be .gz files to speedup cmd.download
+ 
+ - can the download be done as a 10 maps job step?
+   1 for the nodes.dat file and 9 for the indexes.
+   
+ - improve logging of cmd.download
+
  - Get some real numbers!
  
  - How to avoid copying the same jar each time we launch a MapReduce job?
