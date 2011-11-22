@@ -84,10 +84,10 @@ public class TestNodeTableRewriter {
         }
         
         Location location = new Location(output);
-        DatasetGraphTDB dsgDisk = TDBFactory.createDatasetGraph(location);
+        DatasetGraphTDB dsgDisk = (DatasetGraphTDB)TDBFactory.createDatasetGraph(location);
         TDBLoader.load(dsgDisk, urls);
         
-        DatasetGraphTDB dsgMem = TDBFactory.createDatasetGraph();
+        DatasetGraphTDB dsgMem = (DatasetGraphTDB)TDBFactory.createDatasetGraph();
         TDBLoader.load(dsgMem, urls);
         
         NodeTableRewriter.fixNodeTable2(location, log, null);

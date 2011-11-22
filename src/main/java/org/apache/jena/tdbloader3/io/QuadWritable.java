@@ -35,6 +35,7 @@ import org.openjena.riot.system.RiotLib;
 import org.openjena.riot.tokens.Tokenizer;
 import org.openjena.riot.tokens.TokenizerFactory;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.Quad;
 
 public class QuadWritable extends BinaryComparable implements WritableComparable<BinaryComparable> {
@@ -42,6 +43,10 @@ public class QuadWritable extends BinaryComparable implements WritableComparable
     private Quad quad;
     private byte[] bytes;
     private int length;
+    
+    public QuadWritable(){
+    	this( new Quad(Node.NULL, Node.NULL, Node.NULL, Node.NULL) );
+    }
     
     public QuadWritable(Quad quad) {
         this.quad = quad;
