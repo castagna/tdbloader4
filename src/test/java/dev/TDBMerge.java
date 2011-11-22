@@ -44,12 +44,12 @@ public class TDBMerge {
 
 	public static void main(String[] args) {
 		Location location1 = new Location("target/out-01") ;
-		DatasetGraphTDB dsg1 = TDBFactory.createDatasetGraph(location1) ;
+		DatasetGraphTDB dsg1 = (DatasetGraphTDB)TDBFactory.createDatasetGraph(location1) ;
 		TDBLoader.load(dsg1, "src/test/resources/input/data.nq") ;
 		dsg1.close() ;
 
 		Location location2 = new Location("target/out-02") ;
-		DatasetGraphTDB dsg2 = TDBFactory.createDatasetGraph(location2) ;
+		DatasetGraphTDB dsg2 = (DatasetGraphTDB)TDBFactory.createDatasetGraph(location2) ;
 		TDBLoader.load(dsg2, "src/test/resources/input/data.nt") ;
 		dsg2.close() ;
 

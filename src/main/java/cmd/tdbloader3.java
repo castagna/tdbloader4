@@ -200,7 +200,7 @@ public class tdbloader3 extends Configured implements Tool {
                 urls.add(file.getAbsolutePath());
             }
         }
-        DatasetGraphTDB dsg = TDBFactory.createDatasetGraph();
+        DatasetGraphTDB dsg = (DatasetGraphTDB)TDBFactory.createDatasetGraph();
         TDBLoader.load(dsg, urls);
 
         return dsg;
