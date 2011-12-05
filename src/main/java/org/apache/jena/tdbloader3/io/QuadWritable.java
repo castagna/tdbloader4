@@ -45,7 +45,7 @@ public class QuadWritable extends BinaryComparable implements WritableComparable
     private int length;
     
     public QuadWritable(){
-    	this( new Quad(Node.NULL, Node.NULL, Node.NULL, Node.NULL) );
+    	this( new Quad(Node.ANY, Node.ANY, Node.ANY, Node.ANY) );
     }
     
     public QuadWritable(Quad quad) {
