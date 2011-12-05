@@ -164,7 +164,7 @@ public class download extends Configured implements Tool {
 			}
 			InputStream in = new GZIPInputStream(new FileInputStream(file));
 			log.debug("Copying {} into {}.gz ...", file.getName(), indexName);
-			IOUtils.copyBytes(in, out, 8192);
+			IOUtils.copyBytes(in, out, 8192, false);
 			in.close();
 			file.delete();
 			prevIndexName = indexName;
