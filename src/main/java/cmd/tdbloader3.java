@@ -98,21 +98,25 @@ public class tdbloader3 extends Configured implements Tool {
         }
 		
         Tool first = new FirstDriver(configuration);
-        first.run(new String[] { args[0], args[1] + OUTPUT_PATH_POSTFIX_1 });
+        int status = first.run(new String[] { args[0], args[1] + OUTPUT_PATH_POSTFIX_1 });
+        if (status != 0){ return status ;}
 
         createOffsetsFile(fs, args[1] + OUTPUT_PATH_POSTFIX_1, args[1] + OUTPUT_PATH_POSTFIX_1);
         Path offsets = new Path(args[1] + OUTPUT_PATH_POSTFIX_1, Constants.OFFSETS_FILENAME);
         DistributedCache.addCacheFile(offsets.toUri(), configuration);
         
         Tool second = new SecondDriver(configuration);
-        second.run(new String[] { args[0], args[1] + OUTPUT_PATH_POSTFIX_2 });
+        status = second.run(new String[] { args[0], args[1] + OUTPUT_PATH_POSTFIX_2 });
+        if (status != 0){ return status ;}
 
         Tool third = new ThirdDriver(configuration);
-        third.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_2, args[1] + OUTPUT_PATH_POSTFIX_3 });
+        status = third.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_2, args[1] + OUTPUT_PATH_POSTFIX_3 });
+        if (status != 0){ return status ;}
 
         Tool fourth = new FourthDriver(configuration);
-        fourth.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_3, args[1] + OUTPUT_PATH_POSTFIX_4 });
-        
+        status = fourth.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_3, args[1] + OUTPUT_PATH_POSTFIX_4 });
+        if (status != 0){ return status ;}
+
         if ( copyToLocal ) {
         	Tool download = new download(configuration);
         	download.run(new String[] { args[1] + OUTPUT_PATH_POSTFIX_2, args[1] + OUTPUT_PATH_POSTFIX_4, args[1] });
@@ -132,7 +136,7 @@ public class tdbloader3 extends Configured implements Tool {
             System.out.println ("> " + isomorphic);
         }
         
-		return 0;
+		return status;
 	}
 
 	public static void main(String[] args) throws Exception {
