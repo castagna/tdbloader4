@@ -42,8 +42,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.jena.tdbloader3.Constants;
-import org.apache.jena.tdbloader3.NodeTableRewriter;
+import org.apache.jena.tdbloader4.Constants;
+import org.apache.jena.tdbloader4.NodeTableRewriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

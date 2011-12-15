@@ -19,4 +19,4 @@ TODO
  - Refactor download.java so that the download part is separate from the reconstruction of indexes.
  
  - Does this work?
-   hadoop --config ~/.whirr/hadoop jar target/hadoop-deploy/tdbloader3-eploy.jar cmd.tdbloader3 -D overrideOutput=true -D copyToLocal=false s3n://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@{bucketname1} s3n://$AWS_ACCESS_KEY_ID_LIVE:$AWS_SECRET_ACCESS_KEY_LIVE@{bucketname2}
+   hadoop --config ~/.whirr/hadoop jar target/hadoop-deploy/tdbloader4-deploy.jar cmd.tdbloader4 -D overrideOutput=true -D copyToLocal=false s3n://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@{bucketname1} s3n://$AWS_ACCESS_KEY_ID_LIVE:$AWS_SECRET_ACCESS_KEY_LIVE@{bucketname2}

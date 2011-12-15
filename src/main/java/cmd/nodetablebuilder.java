@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
-import org.apache.jena.tdbloader3.NodeTableRewriter;
+import org.apache.jena.tdbloader4.NodeTableRewriter;
 import org.openjena.atlas.lib.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

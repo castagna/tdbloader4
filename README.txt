@@ -1,4 +1,4 @@
-TDB Loader 3
+TDB Loader 4
 ------------
 
 This is a small prototype to show how TDB indexes can be generated using
@@ -9,7 +9,7 @@ use MapReduce to create TDB indexes.
 Options
 -------
 
-A few options supported by tdbloader3:
+A few options supported by tdbloader4:
 
  -D overrideOutput=true ........................ to override the output path
  -D verify=true ............... used for small datasets to check correctness
@@ -46,10 +46,10 @@ Or from a location on S3 (in parallel) use distcp:
 
   hadoop --config ~/.whirr/hadoop distcp s3n://$AWS_ACCESS_KEY_ID_LIVE:$AWS_SECRET_ACCESS_KEY_LIVE@{bucketname} hdfs://{hostname}:8020/user/castagna/input
 
-To launch the tdbloader3 MapReduce jobs:
+To launch the tdbloader4 MapReduce jobs:
 
   mvn hadoop:pack
-  hadoop --config ~/.whirr/hadoop jar target/hadoop-deploy/tdbloader3-hdeploy.jar cmd.tdbloader3 -D overrideOutput=true -D copyToLocal=true input target/output
+  hadoop --config ~/.whirr/hadoop jar target/hadoop-deploy/tdbloader4-hdeploy.jar cmd.tdbloader4 -D overrideOutput=true -D copyToLocal=true input target/output
 
 To shutdown the cluster:
 
@@ -59,7 +59,7 @@ To shutdown the cluster:
 How it works
 ------------
 
-TDB Loader 3 is a sequence of four MapReduce jobs. 
+TDB Loader 4 is a sequence of four MapReduce jobs. 
 
 The first MapReduce computes offsets which are used to build the node table. 
 The second MapReduce job builds the node table and produces the input for the 
@@ -830,7 +830,7 @@ the keys first. This is the input/output for the map function:
 The reduce function does not emit any (key, value) pairs, it just creates 
 the TDB B+Tree indexes.
 
-tdbloader3 will also copy the TDB indexes locally and reconstruct the 
+tdbloader4 will also copy the TDB indexes locally and reconstruct the 
 node2id.dat|idn B+Tree index for the node table from the nodes.dat.
 This is the only step done serially. It should not be a scalability problem.
 However, if this is an issue, a similar technique as the other B+Tree

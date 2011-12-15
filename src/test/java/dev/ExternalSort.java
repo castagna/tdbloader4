@@ -33,8 +33,8 @@ import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.jena.tdbloader3.TDBLoader3Exception;
-import org.apache.jena.tdbloader3.Utils;
+import org.apache.jena.tdbloader4.TDBLoader4Exception;
+import org.apache.jena.tdbloader4.Utils;
 import org.openjena.atlas.data.SerializationFactory;
 import org.openjena.atlas.data.SortedDataBag;
 import org.openjena.atlas.data.ThresholdPolicyCount;
@@ -160,7 +160,7 @@ class TupleSerializationFactory implements SerializationFactory<Tuple<Long>> {
 
     @Override public Iterator<Tuple<Long>> createDeserializer(InputStream in) { return new TupleInputStream(in, 3); }
     @Override public Sink<Tuple<Long>> createSerializer(OutputStream out) { return new TupleOutputStream(out); }
-    @Override public long getEstimatedMemorySize(Tuple<Long> item) { throw new TDBLoader3Exception("Method not implemented.") ; }
+    @Override public long getEstimatedMemorySize(Tuple<Long> item) { throw new TDBLoader4Exception("Method not implemented.") ; }
 
 }
 
@@ -168,7 +168,7 @@ class TupleComparator implements Comparator<Tuple<Long>> {
     @Override
     public int compare(Tuple<Long> t1, Tuple<Long> t2) {
         int size = t1.size();
-        if ( size != t2.size() ) throw new TDBLoader3Exception("Cannot compare tuple of different sizes.") ;
+        if ( size != t2.size() ) throw new TDBLoader4Exception("Cannot compare tuple of different sizes.") ;
         for ( int i = 0; i < size; i++ ) {
             int result = t1.get(i).compareTo(t2.get(i)) ;
             if ( result != 0 ) {
@@ -194,7 +194,7 @@ class TupleOutputStream implements Sink<Tuple<Long>> {
             try {
                 out.writeLong( iter.next() ) ;
             } catch (IOException e) {
-                new TDBLoader3Exception("Problems writing") ;
+                new TDBLoader4Exception("Problems writing") ;
             }
         }
     }
@@ -204,7 +204,7 @@ class TupleOutputStream implements Sink<Tuple<Long>> {
         try {
             out.flush() ;
         } catch (IOException e) {
-            new TDBLoader3Exception("Problems flushing") ;
+            new TDBLoader4Exception("Problems flushing") ;
         }
     }
 
@@ -213,7 +213,7 @@ class TupleOutputStream implements Sink<Tuple<Long>> {
         try {
             out.close() ;
         } catch (IOException e) {
-            new TDBLoader3Exception("Problems closing") ;
+            new TDBLoader4Exception("Problems closing") ;
         }
     }
     
@@ -257,7 +257,7 @@ class TupleInputStream implements Iterator<Tuple<Long>>, Closeable {
                 long g = in.readLong() ;
                 return Tuple.create(s, p, o, g) ;                
             } else {
-                throw new TDBLoader3Exception("Unsupported size.") ;
+                throw new TDBLoader4Exception("Unsupported size.") ;
             }
         } catch (IOException e) {
             return null ;
@@ -266,7 +266,7 @@ class TupleInputStream implements Iterator<Tuple<Long>>, Closeable {
 
     @Override
     public void remove() {
-        throw new TDBLoader3Exception("Method not implemented.") ;
+        throw new TDBLoader4Exception("Method not implemented.") ;
     }
 
     @Override
@@ -274,7 +274,7 @@ class TupleInputStream implements Iterator<Tuple<Long>>, Closeable {
         try {
             in.close() ;
         } catch (IOException e) {
-            new TDBLoader3Exception("Problems closing") ;
+            new TDBLoader4Exception("Problems closing") ;
         }        
     }
     

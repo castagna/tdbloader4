@@ -24,8 +24,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.jena.tdbloader3.Constants;
-import org.apache.jena.tdbloader3.InferDriver;
+import org.apache.jena.tdbloader4.Constants;
+import org.apache.jena.tdbloader4.InferDriver;
 
 public class infer extends Configured implements Tool {
     

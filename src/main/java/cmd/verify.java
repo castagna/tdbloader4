@@ -18,9 +18,9 @@
 
 package cmd;
 
-import static cmd.tdbloader3.dump;
-import static cmd.tdbloader3.isomorphic;
-import static cmd.tdbloader3.load;
+import static cmd.tdbloader4.dump;
+import static cmd.tdbloader4.isomorphic;
+import static cmd.tdbloader4.load;
 
 import org.apache.hadoop.util.ToolRunner;
 

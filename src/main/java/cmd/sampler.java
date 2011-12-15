@@ -30,11 +30,11 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.jena.tdbloader3.io.LongQuadWritable;
-import org.apache.jena.tdbloader3.partitioners.InputSampler;
-import org.apache.jena.tdbloader3.partitioners.Sampler;
-import org.apache.jena.tdbloader3.partitioners.SplitSampler;
-import org.apache.jena.tdbloader3.partitioners.TotalOrderPartitioner;
+import org.apache.jena.tdbloader4.io.LongQuadWritable;
+import org.apache.jena.tdbloader4.partitioners.InputSampler;
+import org.apache.jena.tdbloader4.partitioners.Sampler;
+import org.apache.jena.tdbloader4.partitioners.SplitSampler;
+import org.apache.jena.tdbloader4.partitioners.TotalOrderPartitioner;
 
 /**
  * Utility for collecting samples and writing a partition file for
