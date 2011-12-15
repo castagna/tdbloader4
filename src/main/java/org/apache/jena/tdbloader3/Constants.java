@@ -56,7 +56,10 @@ public class Constants {
 
 	public static final String OPTION_MAX_SPLITS_SAMPLED = "maxSplitsSampled";
 	public static final int OPTION_MAX_SPLITS_SAMPLED_DEFAULT = 10;
-
+	
+	public static final String OPTION_FOURTH_LOCAL_OUTPUT_DIR = "localOutputDirectory";
+	public static final String OPTION_FOURTH_LOCAL_OUTPUT_DIR_DEFAULT = "/tmp";
+	
 	// Non configurable options
 
 	public static final String RUN_ID = "runId";
