@@ -53,10 +53,13 @@ public class FourthReducer extends Reducer<LongQuadWritable, NullWritable, NullW
 	public void setup(Context context) {
 		this.taskAttemptID = context.getTaskAttemptID();
 		outputs = new HashMap<String, OutputStream>();
+		String outputRootDirectory = context.getConfiguration()
+												.get(Constants.OPTION_FOURTH_LOCAL_OUTPUT_DIR,
+													 Constants.OPTION_FOURTH_LOCAL_OUTPUT_DIR_DEFAULT);
 		try {
 			fs = FileSystem.get(context.getConfiguration());
 	        outRemote = FileOutputFormat.getWorkOutputPath(context);
-            outLocal = new Path("/tmp", context.getJobName() + "_" + context.getJobID() + "_" + taskAttemptID);
+            outLocal = new Path(outputRootDirectory, context.getJobName() + "_" + context.getJobID() + "_" + taskAttemptID);
 	        new File(outLocal.toString()).mkdir();
 	        // TODO: does this make sense?
 	        fs.setReplication(outLocal, (short)2);
