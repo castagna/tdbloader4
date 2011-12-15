@@ -18,6 +18,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <scm>
+    <developerConnection>scm:git:ssh://git@github.com/castagna/tdbloader4.git</developerConnection>
+    <connection>scm:git:git://github.com/castagna/tdbloader4.git</connection>
+    <url>http://github.com/castagna/tdbloader4</url>
+  </scm>
+
   <dependencies>
 
     <dependency>
