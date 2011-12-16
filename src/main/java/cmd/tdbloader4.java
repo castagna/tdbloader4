@@ -68,6 +68,16 @@ public class tdbloader4 extends Configured implements Tool {
 
     private static final Logger log = LoggerFactory.getLogger(tdbloader4.class);
 	
+    public tdbloader4 () {
+		super();
+        log.debug("constructed with no configuration.");
+	}
+
+	public tdbloader4 (Configuration configuration) {
+		super(configuration);
+        log.debug("constructed with configuration.");
+	}
+    
 	@Override
 	public int run(String[] args) throws Exception {
 		if ( args.length != 2 ) {
