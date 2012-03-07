@@ -49,7 +49,7 @@ Or from a location on S3 (in parallel) use distcp:
 To launch the tdbloader4 MapReduce jobs:
 
   mvn hadoop:pack
-  hadoop --config ~/.whirr/hadoop jar target/hadoop-deploy/tdbloader4-hdeploy.jar cmd.tdbloader4 -D overrideOutput=true -D copyToLocal=true input target/output
+  hadoop --config ~/.whirr/hadoop jar target/hadoop-deploy/jena-tdbloader4-hdeploy.jar cmd.tdbloader4 -D overrideOutput=true -D copyToLocal=true input target/output
 
 To shutdown the cluster:
 
