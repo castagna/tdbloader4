@@ -62,6 +62,7 @@ import com.hp.hpl.jena.tdb.TDBLoader;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.SetupTDB;
+import com.hp.hpl.jena.tdb.transaction.DatasetGraphTransaction;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 public class tdbloader4 extends Configured implements Tool {
@@ -214,10 +215,10 @@ public class tdbloader4 extends Configured implements Tool {
                 urls.add(file.getAbsolutePath());
             }
         }
-        DatasetGraphTDB dsg = (DatasetGraphTDB)TDBFactory.createDatasetGraph();
-        TDBLoader.load(dsg, urls);
+        DatasetGraphTransaction dsg = (DatasetGraphTransaction)TDBFactory.createDatasetGraph();
+        TDBLoader.load(dsg.getBaseDatasetGraph(), urls);
 
-        return dsg;
+        return dsg.getBaseDatasetGraph();
     }
     
     public static String dump(DatasetGraph dsgMem, DatasetGraph dsgDisk) {

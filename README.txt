@@ -25,13 +25,13 @@ How to use Apache Whirr
 
 To start up an Hadoop cluster using Apache Whirr:
 
-  export AWS_ACCESS_KEY_ID=...
-  export AWS_SECRET_ACCESS_KEY=...
+  export KASABI_AWS_ACCESS_KEY_ID=...
+  export KASABI_AWS_SECRET_ACCESS_KEY=...
   cd /opt/
-  curl -O http://www.apache.org/dist/incubator/whirr/whirr-0.6.0-incubating/whirr-0.6.0-incubating.tar.gz
-  tar zxf whirr-0.6.0-incubating.tar.gz
+  curl -O http://archive.apache.org/dist/whirr/whirr-0.7.1/whirr-0.7.1.tar.gz
+  tar zxf whirr-0.7.1.tar.gz
   ssh-keygen -t rsa -P '' -f ~/.ssh/whirr
-  export PATH=$PATH:/opt/whirr-0.6.0-incubating/bin/
+  export PATH=$PATH:/opt/whirr-0.7.1/bin/
   whirr version
   whirr launch-cluster --config hadoop-ec2.properties --private-key-file ~/.ssh/whirr
   . ~/.whirr/hadoop/hadoop-proxy.sh
@@ -44,7 +44,7 @@ To copy stuff from your local disk or S3 into your HDFS cluster running on EC2:
 
 Or from a location on S3 (in parallel) use distcp:
 
-  hadoop --config ~/.whirr/hadoop distcp s3n://$AWS_ACCESS_KEY_ID_LIVE:$AWS_SECRET_ACCESS_KEY_LIVE@{bucketname} hdfs://{hostname}:8020/user/castagna/input
+  hadoop --config ~/.whirr/hadoop distcp s3n://$KASABI_AWS_ACCESS_KEY_ID:$KASABI_AWS_SECRET_ACCESS_KEY@{bucketname} hdfs://{hostname}:8020/user/castagna/input
 
 To launch the tdbloader4 MapReduce jobs:
 

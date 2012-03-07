@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.jena.tdbloader4.NodeTableRewriter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +42,7 @@ import com.hp.hpl.jena.tdb.TDBLoader;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.TDBMaker;
+import com.hp.hpl.jena.tdb.transaction.DatasetGraphTransaction;
 
 @RunWith(Parameterized.class)
 public class TestNodeTableRewriter {
@@ -68,8 +68,6 @@ public class TestNodeTableRewriter {
         } else {
             FileOps.ensureDir(output);          
         }
-        // I don't understand why this is necessary... :-/
-        TDBMaker.clearDatasetCache();
     }
     
     @Test public void test() throws Exception { 
@@ -85,14 +83,13 @@ public class TestNodeTableRewriter {
         }
         
         Location location = new Location(output);
-        DatasetGraphTDB dsgDisk = (DatasetGraphTDB)TDBFactory.createDatasetGraph(location);
+        DatasetGraphTDB dsgDisk = TDBMaker.uncachedFactory.createDatasetGraph(location);
         TDBLoader.load(dsgDisk, urls);
-        
-        DatasetGraphTDB dsgMem = (DatasetGraphTDB)TDBFactory.createDatasetGraph();
-        TDBLoader.load(dsgMem, urls);
+
+        DatasetGraphTransaction dsgMem = (DatasetGraphTransaction)TDBFactory.createDatasetGraph();
+        TDBLoader.load(dsgMem.getBaseDatasetGraph(), urls);
         
         NodeTableRewriter.fixNodeTable2(location, log, null);
-
         assertTrue ( tdbloader4.dump(dsgMem, dsgDisk), tdbloader4.isomorphic ( dsgMem, dsgDisk ) );
     }
     

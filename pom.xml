@@ -9,11 +9,11 @@
   <name>TDB Loader 4</name>
 
   <properties>
-    <hadoop.version>0.20.204.0</hadoop.version>
-    <tdb.version>0.9.0-incubating-TALIS-RC3</tdb.version>
+    <hadoop.version>1.0.1</hadoop.version>
+    <tdb.version>0.9.0-incubating</tdb.version>
     <commons-io.version>1.3.2</commons-io.version>
-    <slf4j.version>1.6.2</slf4j.version>
-    <junit.version>4.8.2</junit.version>
+    <slf4j.version>1.6.4</slf4j.version>
+    <junit.version>4.9</junit.version>
     <jdk.version>1.6</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -32,11 +32,11 @@
       <version>${hadoop.version}</version>
     </dependency>
 
-    <!-- This is a necessary runtime dependency to run MapReduce jobs locally -->
+    <!-- This is a runtime dependency for Hadoop v1.0.1 -->
     <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.5.2</version>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>jsr311-api</artifactId>
+      <version>1.1.1</version>
     </dependency>
 
     <dependency>
@@ -151,6 +151,10 @@
     <repository>
       <id>apache-snapshots-repo</id>
       <url>https://repository.apache.org/content/repositories/snapshots/</url>
+    </repository>
+    <repository>
+      <id>apache-staging-repo</id>
+      <url>https://repository.apache.org/content/repositories/staging/</url>
     </repository>
     <repository>
       <id>apache-releases-repo</id>

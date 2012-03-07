@@ -36,21 +36,21 @@ import com.hp.hpl.jena.tdb.base.record.RecordFactory;
 import com.hp.hpl.jena.tdb.index.Index;
 import com.hp.hpl.jena.tdb.index.IndexBuilder;
 import com.hp.hpl.jena.tdb.lib.NodeLib;
-import com.hp.hpl.jena.tdb.store.DatasetGraphTDB;
 import com.hp.hpl.jena.tdb.sys.Names;
 import com.hp.hpl.jena.tdb.sys.SystemTDB;
+import com.hp.hpl.jena.tdb.transaction.DatasetGraphTransaction;
 
 public class TDBMerge {
 
 	public static void main(String[] args) {
 		Location location1 = new Location("target/out-01") ;
-		DatasetGraphTDB dsg1 = (DatasetGraphTDB)TDBFactory.createDatasetGraph(location1) ;
-		TDBLoader.load(dsg1, "src/test/resources/input/data.nq") ;
+		DatasetGraphTransaction dsg1 = (DatasetGraphTransaction)TDBFactory.createDatasetGraph(location1) ;
+		TDBLoader.load(dsg1.getBaseDatasetGraph(), "src/test/resources/input/data.nq") ;
 		dsg1.close() ;
 
 		Location location2 = new Location("target/out-02") ;
-		DatasetGraphTDB dsg2 = (DatasetGraphTDB)TDBFactory.createDatasetGraph(location2) ;
-		TDBLoader.load(dsg2, "src/test/resources/input/data.nt") ;
+		DatasetGraphTransaction dsg2 = (DatasetGraphTransaction)TDBFactory.createDatasetGraph(location2) ;
+		TDBLoader.load(dsg2.getBaseDatasetGraph(), "src/test/resources/input/data.nt") ;
 		dsg2.close() ;
 
 		
